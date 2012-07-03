@@ -19,13 +19,13 @@ dnl  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.58a)
-AC_INIT([par2cmdline], [0.4], [peterbclements@users.sourceforge.net])
+AC_PREREQ([2.67])
+AC_INIT([par2cmdline],[0.4],[peterbclements@users.sourceforge.net])
 AC_CONFIG_SRCDIR([par2cmdline.cpp])
 
 AC_CANONICAL_HOST
 
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 
 
