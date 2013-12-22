@@ -23,103 +23,100 @@
 // A disk file can be any type of file that par2cmdline needs
 // to read or write data from or to.
 
-class DiskFile
-{
-public:
-  DiskFile(void);
-  ~DiskFile(void);
+class DiskFile {
+	public:
+		 DiskFile(void);
+		~DiskFile(void);
 
-  // Create a file and set its length
-  bool Create(string filename, u64 filesize);
+		// Create a file and set its length
+		bool Create(string filename, u64 filesize);
 
-  // Write some data to the file
-  bool Write(u64 offset, const void *buffer, size_t length);
+		// Write some data to the file
+		bool Write(u64 offset, const void *buffer, size_t length);
 
-  // Open the file
-  bool Open(void);
-  bool Open(string filename);
-  bool Open(string filename, u64 filesize);
+		// Open the file
+		bool Open(void);
+		bool Open(string filename);
+		bool Open(string filename, u64 filesize);
 
-  // Check to see if the file is open
-#ifdef WIN32
-  bool IsOpen(void) const {return hFile != INVALID_HANDLE_VALUE;}
-#else
-  bool IsOpen(void) const {return file != 0;}
-#endif
+		// Check to see if the file is open
+		#ifdef WIN32
+			bool IsOpen(void) const {return hFile != INVALID_HANDLE_VALUE;}
+		#else
+			bool IsOpen(void) const {return file != 0;}
+		#endif
 
-  // Read some data from the file
-  bool Read(u64 offset, void *buffer, size_t length);
+		// Read some data from the file
+		bool Read(u64 offset, void *buffer, size_t length);
 
-  // Close the file
-  void Close(void);
+		// Close the file
+		void Close(void);
 
-  // Get the size of the file
-  u64 FileSize(void) const {return filesize;}
+		// Get the size of the file
+		u64 FileSize(void) const {return filesize;}
 
-  // Get the name of the file
-  string FileName(void) const {return filename;}
+		// Get the name of the file
+		string FileName(void) const {return filename;}
 
-  // Does the file exist
-  bool Exists(void) const {return exists;}
+		// Does the file exist
+		bool Exists(void) const {return exists;}
 
-  // Rename the file
-  bool Rename(void); // Pick a filename automatically
-  bool Rename(string filename);
+		// Rename the file
+		bool Rename(void); // Pick a filename automatically
+		bool Rename(string filename);
 
-  // Delete the file
-  bool Delete(void);
+		// Delete the file
+		bool Delete(void);
 
-public:
-  static string GetCanonicalPathname(string filename);
+	public:
+		static string GetCanonicalPathname(string filename);
 
-  static void SplitFilename(string filename, string &path, string &name);
-  static string TranslateFilename(string filename);
+		static void SplitFilename(string filename, string &path, string &name);
+		static string TranslateFilename(string filename);
 
-  static bool FileExists(string filename);
-  static u64 GetFileSize(string filename);
+		static bool FileExists(string filename);
+		static u64 GetFileSize(string filename);
 
-  // Search the specified path for files which match the specified wildcard
-  // and return their names in a list.
-  static list<string>* FindFiles(string path, string wildcard);
+		// Search the specified path for files which match the specified wildcard and return their names in a list.
+		static list<string>* FindFiles   (string path, string wildcard);
 
-protected:
-  string filename;
-  u64    filesize;
+	protected:
+		string filename;
+		u64    filesize;
 
-  // OS file handle
-#ifdef WIN32
-  HANDLE hFile;
-#else
-  FILE *file;
-#endif
+		// OS file handle
+		#ifdef WIN32
+			HANDLE hFile;
+		#else
+			FILE *file;
+		#endif
 
-  // Current offset within the file
-  u64    offset;
+		// Current offset within the file
+		u64    offset;
 
-  // Does the file exist
-  bool   exists;
+		// Does the file exist
+		bool   exists;
 
-protected:
-#ifdef WIN32
-  static string ErrorMessage(DWORD error);
-#endif
+	protected:
+		#ifdef WIN32
+			static string ErrorMessage(DWORD error);
+		#endif
 };
 
 // This class keeps track of which DiskFile objects exist
 // and which file on disk they are associated with.
 // It is used to avoid a file being processed twice.
-class DiskFileMap
-{
-public:
-  DiskFileMap(void);
-  ~DiskFileMap(void);
+class DiskFileMap {
+	public:
+		DiskFileMap(void);
+		~DiskFileMap(void);
 
-  bool Insert(DiskFile *diskfile);
-  void Remove(DiskFile *diskfile);
-  DiskFile* Find(string filename) const;
+		bool Insert(DiskFile *diskfile);
+		void Remove(DiskFile *diskfile);
+		DiskFile* Find(string filename) const;
 
-protected:
-  map<string, DiskFile*>    diskfilemap;             // Map from filename to DiskFile
+	protected:
+		map<string, DiskFile*>    diskfilemap;             // Map from filename to DiskFile
 };
 
 #endif // __DISKFILE_H__
