@@ -29,25 +29,25 @@ static char THIS_FILE[]=__FILE__;
 
 Par2Repairer::Par2Repairer(void)
 {
-  firstpacket = true;
-  mainpacket = 0;
-  creatorpacket = 0;
+  firstpacket          = true ;
+  mainpacket           = 0    ;
+  creatorpacket        = 0    ;
 
-  blocksize = 0;
-  sourceblockcount = 0;
+  blocksize            = 0    ;
+  sourceblockcount     = 0    ;
 
-  blocksallocated = false;
+  blocksallocated      = false;
 
-  availableblockcount = 0;
-  missingblockcount = 0;
+  availableblockcount  = 0    ;
+  missingblockcount    = 0    ;
 
-  completefilecount = 0;
-  renamedfilecount = 0;
-  damagedfilecount = 0;
-  missingfilecount = 0;
+  completefilecount    = 0    ;
+  renamedfilecount     = 0    ;
+  damagedfilecount     = 0    ;
+  missingfilecount     = 0    ;
 
-  inputbuffer = 0;
-  outputbuffer = 0;
+  inputbuffer          = 0    ;
+  outputbuffer         = 0    ;
 
   noiselevel = CommandLine::nlNormal;
 }

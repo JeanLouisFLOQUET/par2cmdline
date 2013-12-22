@@ -193,8 +193,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'r':  // Set the amount of redundancy required
-					{
+				case 'r': { // Set the amount of redundancy required
 						if (operation != opCreate)      { cerr << "Cannot specify redundancy unless creating."               << endl; return false; }
 						if (redundancyset)              { cerr << "Cannot specify redundancy twice."                         << endl; return false; }
 						else if (recoveryblockcountset) { cerr << "Cannot specify both redundancy and recovery block count." << endl; return false; }
@@ -211,8 +210,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'c': // Set the number of recovery blocks to create
-					{
+				case 'c': { // Set the number of recovery blocks to create
 						if (operation != opCreate) { cerr << "Cannot specify recovery block count unless creating."     << endl; return false; }
 						if (recoveryblockcountset) { cerr << "Cannot specify recovery block count twice."               << endl; return false; }
 						else if (redundancyset)    { cerr << "Cannot specify both recovery block count and redundancy." << endl; return false; }
@@ -228,8 +226,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'f':  // Specify the First block recovery number
-					{
+				case 'f': { // Specify the First block recovery number
 						if (operation != opCreate) { cerr << "Cannot specify first block number unless creating." << endl; return false; }
 						if (firstblock > 0)        { cerr << "Cannot specify first block twice."                  << endl; return false; }
 
@@ -250,103 +247,55 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'l':  // Limit the size of the recovery files
-					{
-						if (operation != opCreate)
-						{
-							cerr << "Cannot specify limit files unless creating." << endl;
-							return false;
-						}
-						if (argv[0][2])
-						{
-							cerr << "Invalid option: " << argv[0] << endl;
-							return false;
-						}
-						if (recoveryfilescheme != scUnknown)
-						{
-							cerr << "Cannot specify two recovery file size schemes." << endl;
-							return false;
-						}
-						if (recoveryfilecount > 0)
-						{
-							cerr << "Cannot specify limited size and number of files at the same time." << endl;
-							return false;
-						}
-
+				case 'l': { // Limit the size of the recovery files
+						if (operation != opCreate          ) { cerr << "Cannot specify limit files unless creating."                       << endl; return false; }
+						if (argv[0][2]                     ) { cerr << "Invalid option: "                                       << argv[0] << endl; return false; }
+						if (recoveryfilescheme != scUnknown) { cerr << "Cannot specify two recovery file size schemes."                    << endl; return false; }
+						if (recoveryfilecount > 0          ) { cerr << "Cannot specify limited size and number of files at the same time." << endl; return false; }
 						recoveryfilescheme = scLimited;
 					}
 					break;
 
-				case 'n':  // Specify the number of recovery files
-					{
-						if (operation != opCreate)
-						{
-							cerr << "Cannot specify recovery file count unless creating." << endl;
-							return false;
-						}
-						if (recoveryfilecount > 0)
-						{
-							cerr << "Cannot specify recovery file count twice." << endl;
-							return false;
-						}
-						if (redundancyset && redundancy == 0)
-						{
-							cerr << "Cannot set file count when redundancy is set to 0." << endl;
-							return false;
-						}
-						if (recoveryblockcountset && recoveryblockcount == 0)
-						{
-							cerr << "Cannot set file count when recovery block count is set to 0." << endl;
-							return false;
-						}
-						if (recoveryfilescheme == scLimited)
-						{
-							cerr << "Cannot specify limited size and number of files at the same time." << endl;
-							return false;
-						}
+				case 'n': { // Specify the number of recovery files
+						if (operation != opCreate                           ) { cerr << "Cannot specify recovery file count unless creating."               << endl; return false; }
+						if (recoveryfilecount > 0                           ) { cerr << "Cannot specify recovery file count twice."                         << endl; return false; }
+						if (redundancyset && redundancy                 == 0) { cerr << "Cannot set file count when redundancy is set to 0."                << endl; return false; }
+						if (recoveryblockcountset && recoveryblockcount == 0) { cerr << "Cannot set file count when recovery block count is set to 0."      << endl; return false; }
+						if (recoveryfilescheme == scLimited                 ) { cerr << "Cannot specify limited size and number of files at the same time." << endl; return false; }
 
 						char *p = &argv[0][2];
-						while (*p && isdigit(*p))
-						{
+						while (*p && isdigit(*p)) {
 							recoveryfilecount = recoveryfilecount * 10 + (*p - '0');
 							p++;
 						}
-						if (recoveryfilecount == 0 || *p)
-						{
+						if (recoveryfilecount == 0 || *p) {
 							cerr << "Invalid recovery file count option: " << argv[0] << endl;
 							return false;
 						}
 					}
 					break;
 
-				case 'm':  // Specify how much memory to use for output buffers
-					{
-						if (memorylimit > 0)
-						{
+				case 'm': { // Specify how much memory to use for output buffers
+						if (memorylimit > 0) {
 							cerr << "Cannot specify memory limit twice." << endl;
 							return false;
 						}
 
 						char *p = &argv[0][2];
-						while (*p && isdigit(*p))
-						{
+						while (*p && isdigit(*p)) {
 							memorylimit = memorylimit * 10 + (*p - '0');
 							p++;
 						}
-						if (memorylimit == 0 || *p)
-						{
+						if (memorylimit == 0 || *p) {
 							cerr << "Invalid memory limit option: " << argv[0] << endl;
 							return false;
 						}
 					}
 					break;
 
-				case 'v':
-					{
-						switch (noiselevel)
-						{
-						case nlUnknown:
-							{
+				case 'v': {
+						switch (noiselevel) {
+						case nlUnknown: {
 								if (argv[0][2] == 'v')
 									noiselevel = nlDebug;
 								else
@@ -365,12 +314,9 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'q':
-					{
-						switch (noiselevel)
-						{
-						case nlUnknown:
-							{
+				case 'q': {
+						switch (noiselevel) {
+						case nlUnknown: {
 								if (argv[0][2] == 'q') {
 									noiselevel = nlSilent;
 								} else {
@@ -394,15 +340,12 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					{ argc--; argv++; options = false; continue; }
 					break;
 
-				default:
-					{
+				default: {
 						cerr << "Invalid option specified: " << argv[0] << endl;
 						return false;
 					}
 				}
-			}
-			else
-			{
+			} else {
 				list<string> *filenames = new list<string>;
 
 				// If the argument includes wildcard characters, search the disk for matching files

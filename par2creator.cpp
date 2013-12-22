@@ -29,59 +29,56 @@ static char THIS_FILE[]=__FILE__;
 
 Par2Creator::Par2Creator(void)
 : noiselevel(CommandLine::nlUnknown)
-, blocksize(0)
-, chunksize(0)
-, inputbuffer(0)
-, outputbuffer(0)
+, blocksize         (0)
+, chunksize         (0)
+, inputbuffer       (0)
+, outputbuffer      (0)
 
-, sourcefilecount(0)
-, sourceblockcount(0)
+, sourcefilecount   (0)
+, sourceblockcount  (0)
 
-, largestfilesize(0)
+, largestfilesize   (0)
 , recoveryfilescheme(CommandLine::scUnknown)
-, recoveryfilecount(0)
+, recoveryfilecount (0)
 , recoveryblockcount(0)
 , firstrecoveryblock(0)
 
-, mainpacket(0)
-, creatorpacket(0)
+, mainpacket        (0)
+, creatorpacket     (0)
 
 , deferhashcomputation(false)
 {
 }
 
-Par2Creator::~Par2Creator(void)
-{
-	delete mainpacket;
+Par2Creator::~Par2Creator(void) {
+	delete mainpacket   ;
 	delete creatorpacket;
 
-	delete [] (u8*)inputbuffer;
+	delete [] (u8*)inputbuffer ;
 	delete [] (u8*)outputbuffer;
 
 	vector<Par2CreatorSourceFile*>::iterator sourcefile = sourcefiles.begin();
-	while (sourcefile != sourcefiles.end())
-	{
+	while (sourcefile != sourcefiles.end()) {
 		delete *sourcefile;
 		++sourcefile;
 	}
 }
 
-Result Par2Creator::Process(const CommandLine &commandline)
-{
+Result Par2Creator::Process(const CommandLine &commandline) {
 	// Get information from commandline
-	noiselevel = commandline.GetNoiseLevel();
-	blocksize = commandline.GetBlockSize();
-	sourceblockcount = commandline.GetBlockCount();
-	const list<CommandLine::ExtraFile> extrafiles = commandline.GetExtraFiles();
-	sourcefilecount = (u32)extrafiles.size();
-	u32 redundancy = commandline.GetRedundancy();
-	recoveryblockcount = commandline.GetRecoveryBlockCount();
-	recoveryfilecount = commandline.GetRecoveryFileCount();
-	firstrecoveryblock = commandline.GetFirstRecoveryBlock();
-	recoveryfilescheme = commandline.GetRecoveryFileScheme();
-	string par2filename = commandline.GetParFilename();
-	size_t memorylimit = commandline.GetMemoryLimit();
-	largestfilesize = commandline.GetLargestSourceSize();
+	noiselevel                                    = commandline.GetNoiseLevel        ();
+	blocksize                                     = commandline.GetBlockSize         ();
+	sourceblockcount                              = commandline.GetBlockCount        ();
+	const list<CommandLine::ExtraFile> extrafiles = commandline.GetExtraFiles        ();
+	sourcefilecount                               = (u32)extrafiles.size             ();
+	u32 redundancy                                = commandline.GetRedundancy        ();
+	recoveryblockcount                            = commandline.GetRecoveryBlockCount();
+	recoveryfilecount                             = commandline.GetRecoveryFileCount ();
+	firstrecoveryblock                            = commandline.GetFirstRecoveryBlock();
+	recoveryfilescheme                            = commandline.GetRecoveryFileScheme();
+	string par2filename                           = commandline.GetParFilename       ();
+	size_t memorylimit                            = commandline.GetMemoryLimit       ();
+	largestfilesize                               = commandline.GetLargestSourceSize ();
 
 	// Compute block size from block count or vice versa depending on which was
 	// specified on the command line
@@ -135,8 +132,7 @@ Result Par2Creator::Process(const CommandLine &commandline)
 	if (!InitialiseOutputFiles(par2filename))
 		return eFileIOError;
 
-	if (recoveryblockcount > 0)
-	{
+	if (recoveryblockcount > 0) {
 		// Allocate memory buffers for reading and writing data to disk.
 		if (!AllocateBuffers())
 			return eMemoryError;
@@ -151,8 +147,7 @@ Result Par2Creator::Process(const CommandLine &commandline)
 
 		// Start at an offset of 0 within a block.
 		u64 blockoffset = 0;
-		while (blockoffset < blocksize) // Continue until the end of the block.
-		{
+		while (blockoffset < blocksize) { // Continue until the end of the block.
 			// Work out how much data to process this time.
 			size_t blocklength = (size_t)min((u64)chunksize, blocksize-blockoffset);
 
@@ -257,13 +252,11 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 					size = lowerBound;
 
 					count = 0;
-					for (ExtraFileIterator i=extrafiles.begin(); i!=extrafiles.end(); i++)
-					{
+					for (ExtraFileIterator i=extrafiles.begin(); i!=extrafiles.end(); i++) {
 						count += ((i->FileSize()+3)/4 + size-1) / size;
 					}
 
-					if (bestdistance > (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count))
-					{
+					if (bestdistance > (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count)) {
 						bestdistance = (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count);
 						bestcount = count;
 						bestsize = size;
@@ -275,13 +268,11 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 					size = upperBound;
 
 					count = 0;
-					for (ExtraFileIterator i=extrafiles.begin(); i!=extrafiles.end(); i++)
-					{
+					for (ExtraFileIterator i=extrafiles.begin(); i!=extrafiles.end(); i++) {
 						count += ((i->FileSize()+3)/4 + size-1) / size;
 					}
 
-					if (bestdistance > (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count))
-					{
+					if (bestdistance > (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count)) {
 						bestdistance = (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count);
 						bestcount = count;
 						bestsize = size;
@@ -289,42 +280,29 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 				}
 
 				// Use binary search to find best block size
-				while (lowerBound+1 < upperBound)
-				{
+				while (lowerBound+1 < upperBound) {
 					size = (lowerBound + upperBound)/2;
 
 					count = 0;
-					for (ExtraFileIterator i=extrafiles.begin(); i!=extrafiles.end(); i++)
-					{
+					for (ExtraFileIterator i=extrafiles.begin(); i!=extrafiles.end(); i++) {
 						count += ((i->FileSize()+3)/4 + size-1) / size;
 					}
 
-					if (bestdistance > (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count))
-					{
+					if (bestdistance > (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count)) {
 						bestdistance = (count>sourceblockcount ? count-sourceblockcount : sourceblockcount-count);
 						bestcount = count;
 						bestsize = size;
 					}
 
-					if (count < sourceblockcount)
-					{
-						upperBound = size;
-					}
-					else if (count > sourceblockcount)
-					{
-						lowerBound = size;
-					}
-					else
-					{
-						upperBound = size;
-					}
+					     if (count < sourceblockcount) { upperBound = size; }
+					else if (count > sourceblockcount) { lowerBound = size; }
+					else                               { upperBound = size; }
 				}
 
-				size = bestsize;
+				size  = bestsize;
 				count = bestcount;
 
-				if (count > 32768)
-				{
+				if (count > 32768) {
 					cerr << "Error calculating block size." << endl;
 					return false;
 				}
@@ -341,8 +319,7 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 
 // Determine how many recovery blocks to create based on the source block
 // count and the requested level of redundancy.
-bool Par2Creator::ComputeRecoveryBlockCount(u32 redundancy)
-{
+bool Par2Creator::ComputeRecoveryBlockCount(u32 redundancy) {
 	// Determine recoveryblockcount
 	recoveryblockcount = (sourceblockcount * redundancy + 50) / 100;
 
@@ -350,15 +327,13 @@ bool Par2Creator::ComputeRecoveryBlockCount(u32 redundancy)
 	if (recoveryblockcount == 0 && redundancy > 0)
 		recoveryblockcount = 1;
 
-	if (recoveryblockcount > 65536)
-	{
+	if (recoveryblockcount > 65536) {
 		cerr << "Too many recovery blocks requested." << endl;
 		return false;
 	}
 
 	// Check that the last recovery block number would not be too large
-	if (firstrecoveryblock + recoveryblockcount >= 65536)
-	{
+	if (firstrecoveryblock + recoveryblockcount >= 65536) {
 		cerr << "First recovery block number is too high." << endl;
 		return false;
 	}
@@ -370,24 +345,17 @@ bool Par2Creator::ComputeRecoveryBlockCount(u32 redundancy)
 bool Par2Creator::CalculateProcessBlockSize(size_t memorylimit)
 {
 	// Are we computing any recovery blocks
-	if (recoveryblockcount == 0)
-	{
+	if (recoveryblockcount == 0) {
 		deferhashcomputation = false;
-	}
-	else
-	{
+	} else {
 		// Would single pass processing use too much memory
-		if (blocksize * recoveryblockcount > memorylimit)
-		{
+		if (blocksize * recoveryblockcount > memorylimit) {
 			// Pick a size that is small enough
 			chunksize = ~3 & (memorylimit / recoveryblockcount);
 
 			deferhashcomputation = false;
-		}
-		else
-		{
+		} else {
 			chunksize = (size_t)blocksize;
-
 			deferhashcomputation = true;
 		}
 	}
@@ -399,48 +367,39 @@ bool Par2Creator::CalculateProcessBlockSize(size_t memorylimit)
 bool Par2Creator::ComputeRecoveryFileCount(void)
 {
 	// Are we computing any recovery blocks
-	if (recoveryblockcount == 0)
-	{
+	if (recoveryblockcount == 0) {
 		recoveryfilecount = 0;
 		return true;
 	}
 
-	switch (recoveryfilescheme)
-	{
-	case CommandLine::scUnknown:
-		{
+	switch (recoveryfilescheme) {
+	case CommandLine::scUnknown: {
 			assert(false);
 			return false;
 		}
 		break;
 	case CommandLine::scVariable:
-	case CommandLine::scUniform:
-		{
-			if (recoveryfilecount == 0)
-			{
+	case CommandLine::scUniform: {
+			if (recoveryfilecount == 0) {
 				// If none specified then then filecount is roughly log2(blockcount)
 				// This prevents you getting excessively large numbers of files
 				// when the block count is high and also allows the files to have
 				// sizes which vary exponentially.
 
-				for (u32 blocks=recoveryblockcount; blocks>0; blocks>>=1)
-				{
+				for (u32 blocks=recoveryblockcount; blocks>0; blocks>>=1) {
 					recoveryfilecount++;
 				}
 			}
 
-			if (recoveryfilecount > recoveryblockcount)
-			{
-				// You cannot have move recovery files that there are recovery blocks
-				// to put in them.
+			if (recoveryfilecount > recoveryblockcount) {
+				// You cannot have move recovery files that there are recovery blocks to put in them.
 				cerr << "Too many recovery files specified." << endl;
 				return false;
 			}
 		}
 		break;
 
-	case CommandLine::scLimited:
-		{
+	case CommandLine::scLimited: {
 			// No recovery file will contain more recovery blocks than would
 			// be required to reconstruct the largest source file if it
 			// were missing. Other recovery files will have recovery blocks
@@ -452,8 +411,7 @@ bool Par2Creator::ComputeRecoveryFileCount(void)
 
 			u32 extra = recoveryblockcount - whole * largest;
 			recoveryfilecount = whole;
-			for (u32 blocks=extra; blocks>0; blocks>>=1)
-			{
+			for (u32 blocks=extra; blocks>0; blocks>>=1) {
 				recoveryfilecount++;
 			}
 		}
@@ -468,8 +426,7 @@ bool Par2Creator::ComputeRecoveryFileCount(void)
 bool Par2Creator::OpenSourceFiles(const list<CommandLine::ExtraFile> &extrafiles)
 {
 	ExtraFileIterator extrafile = extrafiles.begin();
-	while (extrafile != extrafiles.end())
-	{
+	while (extrafile != extrafiles.end()) {
 		Par2CreatorSourceFile *sourcefile = new Par2CreatorSourceFile;
 
 		string path;
@@ -480,8 +437,7 @@ bool Par2Creator::OpenSourceFiles(const list<CommandLine::ExtraFile> &extrafiles
 			cout << "Opening: " << name << endl;
 
 		// Open the source file and compute its Hashes and CRCs.
-		if (!sourcefile->Open(noiselevel, *extrafile, blocksize, deferhashcomputation))
-		{
+		if (!sourcefile->Open(noiselevel, *extrafile, blocksize, deferhashcomputation)) {
 			delete sourcefile;
 			return false;
 		}
@@ -503,8 +459,7 @@ bool Par2Creator::OpenSourceFiles(const list<CommandLine::ExtraFile> &extrafiles
 }
 
 // Create the main packet and determine the setid to use with all packets
-bool Par2Creator::CreateMainPacket(void)
-{
+bool Par2Creator::CreateMainPacket(void) {
 	// Construct the main packet from the list of source files and the block size.
 	mainpacket = new MainPacket;
 
@@ -516,8 +471,7 @@ bool Par2Creator::CreateMainPacket(void)
 }
 
 // Create the creator packet.
-bool Par2Creator::CreateCreatorPacket(void)
-{
+bool Par2Creator::CreateCreatorPacket(void) {
 	// Construct the creator packet
 	creatorpacket = new CreatorPacket;
 
@@ -526,8 +480,7 @@ bool Par2Creator::CreateCreatorPacket(void)
 }
 
 // Initialise all of the source blocks ready to start reading data from the source files.
-bool Par2Creator::CreateSourceBlocks(void)
-{
+bool Par2Creator::CreateSourceBlocks(void) {
 	// Allocate the array of source blocks
 	sourceblocks.resize(sourceblockcount);
 
@@ -535,8 +488,7 @@ bool Par2Creator::CreateSourceBlocks(void)
 
 	for (vector<Par2CreatorSourceFile*>::iterator sourcefile = sourcefiles.begin();
 			 sourcefile!= sourcefiles.end();
-			 sourcefile++)
-	{
+			 sourcefile++) {
 		// Allocate the appopriate number of source blocks to each source file.
 		// sourceblock will be advanced.
 
@@ -546,11 +498,9 @@ bool Par2Creator::CreateSourceBlocks(void)
 	return true;
 }
 
-class FileAllocation
-{
+class FileAllocation {
 public:
-	FileAllocation(void)
-	{
+	FileAllocation(void) {
 		filename = "";
 		exponent = 0;
 		count = 0;
@@ -562,8 +512,7 @@ public:
 };
 
 // Create all of the output files and allocate all packets to appropriate file offets.
-bool Par2Creator::InitialiseOutputFiles(string par2filename)
-{
+bool Par2Creator::InitialiseOutputFiles(string par2filename) {
 	// Allocate the recovery packets
 	recoverypackets.resize(recoveryblockcount);
 
@@ -573,25 +522,20 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 	{
 		// Decide how many recovery blocks to place in each file
 		u32 exponent = firstrecoveryblock;
-		if (recoveryfilecount > 0)
-		{
-			switch (recoveryfilescheme)
-			{
-			case CommandLine::scUnknown:
-				{
+		if (recoveryfilecount > 0) {
+			switch (recoveryfilescheme) {
+			case CommandLine::scUnknown: {
 					assert(false);
 					return false;
 				}
 				break;
-			case CommandLine::scUniform:
-				{
-					// Files will have roughly the same number of recovery blocks each.
 
+			case CommandLine::scUniform: {
+					// Files will have roughly the same number of recovery blocks each.
 					u32 base      = recoveryblockcount / recoveryfilecount;
 					u32 remainder = recoveryblockcount % recoveryfilecount;
 
-					for (u32 filenumber=0; filenumber<recoveryfilecount; filenumber++)
-					{
+					for (u32 filenumber=0; filenumber<recoveryfilecount; filenumber++) {
 						fileallocations[filenumber].exponent = exponent;
 						fileallocations[filenumber].count = (filenumber<remainder) ? base+1 : base;
 						exponent += fileallocations[filenumber].count;
@@ -599,23 +543,19 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 				}
 				break;
 
-			case CommandLine::scVariable:
-				{
+			case CommandLine::scVariable: {
 					// Files will have recovery blocks allocated in an exponential fashion.
-
 					// Work out how many blocks to place in the smallest file
 					u32 lowblockcount = 1;
 					u32 maxrecoveryblocks = (1 << recoveryfilecount) - 1;
-					while (maxrecoveryblocks < recoveryblockcount)
-					{
+					while (maxrecoveryblocks < recoveryblockcount) {
 						lowblockcount <<= 1;
 						maxrecoveryblocks <<= 1;
 					}
 
 					// Allocate the blocks.
 					u32 blocks = recoveryblockcount;
-					for (u32 filenumber=0; filenumber<recoveryfilecount; filenumber++)
-					{
+					for (u32 filenumber=0; filenumber<recoveryfilecount; filenumber++) {
 						u32 number = min(lowblockcount, blocks);
 						fileallocations[filenumber].exponent = exponent;
 						fileallocations[filenumber].count = number;
@@ -626,8 +566,7 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 				}
 				break;
 
-			case CommandLine::scLimited:
-				{
+			case CommandLine::scLimited: {
 					// Files will be allocated in an exponential fashion but the
 					// Maximum file size will be limited.
 
@@ -638,8 +577,7 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 					exponent = firstrecoveryblock + recoveryblockcount;
 
 					// Allocate uniformly at the top
-					while (blocks >= 2*largest && filenumber > 0)
-					{
+					while (blocks >= 2*largest && filenumber > 0) {
 						filenumber--;
 						exponent -= largest;
 						blocks -= largest;
@@ -654,8 +592,7 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 					u32 files = filenumber;
 
 					// Allocate exponentially at the bottom
-					for (filenumber=0; filenumber<files; filenumber++)
-					{
+					for (filenumber=0; filenumber<files; filenumber++) {
 						u32 number = min(count, blocks);
 						fileallocations[filenumber].exponent = exponent;
 						fileallocations[filenumber].count = number;
@@ -676,29 +613,20 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 		// Determine the format to use for filenames of recovery files
 		char filenameformat[300];
 		{
-			u32 limitLow = 0;
+			u32 limitLow   = 0;
 			u32 limitCount = 0;
-			for (u32 filenumber=0; filenumber<=recoveryfilecount; filenumber++)
-			{
-				if (limitLow < fileallocations[filenumber].exponent)
-				{
-					limitLow = fileallocations[filenumber].exponent;
-				}
-				if (limitCount < fileallocations[filenumber].count)
-				{
-					limitCount = fileallocations[filenumber].count;
-				}
+			for (u32 filenumber=0; filenumber<=recoveryfilecount; filenumber++) {
+				if (limitLow   < fileallocations[filenumber].exponent) { limitLow   = fileallocations[filenumber].exponent; }
+				if (limitCount < fileallocations[filenumber].count   ) { limitCount = fileallocations[filenumber].count   ; }
 			}
 
 			u32 digitsLow = 1;
-			for (u32 t=limitLow; t>=10; t/=10)
-			{
+			for (u32 t=limitLow; t>=10; t/=10) {
 				digitsLow++;
 			}
 
 			u32 digitsCount = 1;
-			for (u32 t=limitCount; t>=10; t/=10)
-			{
+			for (u32 t=limitCount; t>=10; t/=10) {
 				digitsCount++;
 			}
 
@@ -706,8 +634,7 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 		}
 
 		// Set the filenames
-		for (u32 filenumber=0; filenumber<recoveryfilecount; filenumber++)
-		{
+		for (u32 filenumber=0; filenumber<recoveryfilecount; filenumber++) {
 			char filename[300];
 			snprintf(filename, sizeof(filename), filenameformat, par2filename.c_str(), fileallocations[filenumber].exponent, fileallocations[filenumber].count);
 			fileallocations[filenumber].filename = filename;
@@ -736,27 +663,19 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 				// start at the beginning of the recovery file
 				u64 offset = 0;
 
-				if (count == 0)
-				{
+				if (count == 0) {
 					// Write one set of critical packets
 					list<CriticalPacket*>::const_iterator nextCriticalPacket = criticalpackets.begin();
 
-					while (nextCriticalPacket != criticalpackets.end())
-					{
-						criticalpacketentries.push_back(CriticalPacketEntry(&*recoveryfile,
-																																offset,
-																																*nextCriticalPacket));
+					while (nextCriticalPacket != criticalpackets.end()) {
+						criticalpacketentries.push_back(CriticalPacketEntry(&*recoveryfile,offset,*nextCriticalPacket));
 						offset += (*nextCriticalPacket)->PacketLength();
-
 						++nextCriticalPacket;
 					}
-				}
-				else
-				{
+				} else {
 					// How many copies of each critical packet
 					u32 copies = 0;
-					for (u32 t=count; t>0; t>>=1)
-					{
+					for (u32 t=count; t>0; t>>=1) {
 						copies++;
 					}
 
@@ -769,8 +688,7 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 
 					// Start allocating the recovery packets
 					u32 limit = exponent + count;
-					while (exponent < limit)
-					{
+					while (exponent < limit) {
 						// Add the next recovery packet
 						recoverypacket->Create(&*recoveryfile, offset, blocksize, exponent, setid);
 
@@ -780,24 +698,18 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 
 						// Add some critical packets
 						packetCount += copies * criticalpackets.size();
-						while (packetCount >= count)
-						{
+						while (packetCount >= count) {
 							if (nextCriticalPacket == criticalpackets.end()) nextCriticalPacket = criticalpackets.begin();
-							criticalpacketentries.push_back(CriticalPacketEntry(&*recoveryfile,
-																																	offset,
-																																	*nextCriticalPacket));
+							criticalpacketentries.push_back(CriticalPacketEntry(&*recoveryfile,offset,*nextCriticalPacket));
 							offset += (*nextCriticalPacket)->PacketLength();
 							++nextCriticalPacket;
-
 							packetCount -= count;
 						}
 					}
 				}
 
 				// Add one copy of the creator packet
-				criticalpacketentries.push_back(CriticalPacketEntry(&*recoveryfile,
-																														offset,
-																														creatorpacket));
+				criticalpacketentries.push_back(CriticalPacketEntry(&*recoveryfile,offset,creatorpacket));
 				offset += creatorpacket->PacketLength();
 
 				// Create the file on disk and make it the required size
@@ -809,18 +721,15 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename)
 			}
 		}
 	}
-
 	return true;
 }
 
 // Allocate memory buffers for reading and writing data to disk.
-bool Par2Creator::AllocateBuffers(void)
-{
+bool Par2Creator::AllocateBuffers(void) {
 	inputbuffer = new u8[chunksize];
 	outputbuffer = new u8[chunksize * recoveryblockcount];
 
-	if (inputbuffer == NULL || outputbuffer == NULL)
-	{
+	if (inputbuffer == NULL || outputbuffer == NULL) {
 		cerr << "Could not allocate buffer memory." << endl;
 		return false;
 	}
@@ -829,16 +738,13 @@ bool Par2Creator::AllocateBuffers(void)
 }
 
 // Compute the Reed Solomon matrix
-bool Par2Creator::ComputeRSMatrix(void)
-{
+bool Par2Creator::ComputeRSMatrix(void) {
 	// Set the number of input blocks
 	if (!rs.SetInput(sourceblockcount))
 		return false;
 
 	// Set the number of output blocks to be created
-	if (!rs.SetOutput(false,
-										(u16)firstrecoveryblock,
-										(u16)firstrecoveryblock + (u16)(recoveryblockcount-1)))
+	if (!rs.SetOutput(false,(u16)firstrecoveryblock,(u16)firstrecoveryblock + (u16)(recoveryblockcount-1)))
 		return false;
 
 	// Compute the RS matrix
@@ -849,8 +755,7 @@ bool Par2Creator::ComputeRSMatrix(void)
 }
 
 // Read source data, process it through the RS matrix and write it to disk.
-bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
-{
+bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength) {
 	// Clear the output buffer
 	memset(outputbuffer, 0, chunksize * recoveryblockcount);
 
@@ -868,21 +773,17 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
 	// For each input block
 	for ((sourceblock=sourceblocks.begin()),(inputblock=0);
 			 sourceblock != sourceblocks.end();
-			 ++sourceblock, ++inputblock)
-	{
+			 ++sourceblock, ++inputblock) {
 		// Are we reading from a new file?
-		if (lastopenfile != (*sourceblock).GetDiskFile())
-		{
+		if (lastopenfile != (*sourceblock).GetDiskFile()) {
 			// Close the last file
-			if (lastopenfile != NULL)
-			{
+			if (lastopenfile != NULL) {
 				lastopenfile->Close();
 			}
 
 			// Open the new file
 			lastopenfile = (*sourceblock).GetDiskFile();
-			if (!lastopenfile->Open())
-			{
+			if (!lastopenfile->Open()) {
 				return false;
 			}
 		}
@@ -891,8 +792,7 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
 		if (!sourceblock->ReadData(blockoffset, blocklength, inputbuffer))
 			return false;
 
-		if (deferhashcomputation)
-		{
+		if (deferhashcomputation) {
 			assert(blockoffset == 0 && blocklength == blocksize);
 			assert(sourcefile != sourcefiles.end());
 
@@ -908,31 +808,27 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
 			// Process the data through the RS matrix
 			rs.Process(blocklength, inputblock, inputbuffer, outputblock, outbuf);
 
-			if (noiselevel > CommandLine::nlQuiet)
-			{
+			if (noiselevel > CommandLine::nlQuiet) {
 				// Update a progress indicator
 				u32 oldfraction = (u32)(1000 * progress / totaldata);
 				progress += blocklength;
 				u32 newfraction = (u32)(1000 * progress / totaldata);
 
-				if (oldfraction != newfraction)
-				{
+				if (oldfraction != newfraction) {
 					cout << "Processing: " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
 				}
 			}
 		}
 
 		// Work out which source file the next block belongs to
-		if (++sourceindex >= (*sourcefile)->BlockCount())
-		{
+		if (++sourceindex >= (*sourcefile)->BlockCount()) {
 			sourceindex = 0;
 			++sourcefile;
 		}
 	}
 
 	// Close the last file
-	if (lastopenfile != NULL)
-	{
+	if (lastopenfile != NULL) {
 		lastopenfile->Close();
 	}
 
@@ -940,8 +836,7 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
 		cout << "Writing recovery packets\r";
 
 	// For each output block
-	for (u32 outputblock=0; outputblock<recoveryblockcount;outputblock++)
-	{
+	for (u32 outputblock=0; outputblock<recoveryblockcount;outputblock++) {
 		// Select the appropriate part of the output buffer
 		char *outbuf = &((char*)outputbuffer)[chunksize * outputblock];
 
@@ -957,13 +852,11 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength)
 }
 
 // Finish computation of the recovery packets and write the headers to disk.
-bool Par2Creator::WriteRecoveryPacketHeaders(void)
-{
+bool Par2Creator::WriteRecoveryPacketHeaders(void) {
 	// For each recovery packet
 	for (vector<RecoveryPacket>::iterator recoverypacket = recoverypackets.begin();
 			 recoverypacket != recoverypackets.end();
-			 ++recoverypacket)
-	{
+			 ++recoverypacket) {
 		// Finish the packet header and write it to disk
 		if (!recoverypacket->WriteHeader())
 			return false;
@@ -972,35 +865,28 @@ bool Par2Creator::WriteRecoveryPacketHeaders(void)
 	return true;
 }
 
-bool Par2Creator::FinishFileHashComputation(void)
-{
+bool Par2Creator::FinishFileHashComputation(void) {
 	// If we defered the computation of the full file hash, then we finish it now
-	if (deferhashcomputation)
-	{
+	if (deferhashcomputation) {
 		// For each source file
 		vector<Par2CreatorSourceFile*>::iterator sourcefile = sourcefiles.begin();
 
-		while (sourcefile != sourcefiles.end())
-		{
+		while (sourcefile != sourcefiles.end()) {
 			(*sourcefile)->FinishHashes();
-
 			++sourcefile;
 		}
 	}
-
 	return true;
 }
 
 // Fill in all remaining details in the critical packets.
-bool Par2Creator::FinishCriticalPackets(void)
-{
+bool Par2Creator::FinishCriticalPackets(void) {
 	// Get the setid from the main packet
 	const MD5Hash &setid = mainpacket->SetId();
 
 	for (list<CriticalPacket*>::iterator criticalpacket=criticalpackets.begin();
 			 criticalpacket!=criticalpackets.end();
-			 criticalpacket++)
-	{
+			 criticalpacket++) {
 		// Store the setid in each of the critical packets
 		// and compute the packet_hash of each one.
 
@@ -1011,8 +897,7 @@ bool Par2Creator::FinishCriticalPackets(void)
 }
 
 // Write all other critical packets to disk.
-bool Par2Creator::WriteCriticalPackets(void)
-{
+bool Par2Creator::WriteCriticalPackets(void) {
 	list<CriticalPacketEntry>::const_iterator packetentry = criticalpacketentries.begin();
 
 	// For each critical packet
@@ -1029,8 +914,7 @@ bool Par2Creator::WriteCriticalPackets(void)
 }
 
 // Close all files.
-bool Par2Creator::CloseFiles(void)
-{
+bool Par2Creator::CloseFiles(void) {
 //  // Close each source file.
 //  for (vector<Par2CreatorSourceFile*>::iterator sourcefile = sourcefiles.begin();
 //       sourcefile != sourcefiles.end();
@@ -1042,8 +926,7 @@ bool Par2Creator::CloseFiles(void)
 	// Close each recovery file.
 	for (vector<DiskFile>::iterator recoveryfile = recoveryfiles.begin();
 			 recoveryfile != recoveryfiles.end();
-			 ++recoveryfile)
-	{
+			 ++recoveryfile) {
 		recoveryfile->Close();
 	}
 
