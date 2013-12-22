@@ -38,7 +38,7 @@
 #include <assert.h>
 
 #define snprintf _snprintf
-#define stat _stat
+#define stat64 _stat64       //We need to use 64bit structure to support files larger than 2GB
 
 #define __LITTLE_ENDIAN 1234
 #define __BIG_ENDIAN    4321

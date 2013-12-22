@@ -330,8 +330,6 @@
 		return true;
 	}
 
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #else // !WIN32
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -652,16 +650,16 @@ bool DiskFile::FileExists(string filename) {
 // Get the size of a file
 //==============================================================================================================================================================
 u64 DiskFile::GetFileSize(string filename) {
-	struct stat st;
+	struct stat64 st;
 	u64 result;
 
-	result = stat(filename.c_str(), &st);
+	result = _stat64(filename.c_str(), &st);
 	if (st.st_size<0) {
 		cerr << "File '" << filename << "' returned a negative size (" << st.st_size << ")." << endl;
 		return false;
 	}
 
-	if ((0 == stat(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG))) {
+	if ((0 == stat64(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG))) {
 		return st.st_size;
 	} else {
 		return 0;
