@@ -18,6 +18,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "config.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -29,7 +30,7 @@ static char THIS_FILE[]=__FILE__;
 
 void banner(void)
 {
-  string version = PACKAGE " version " VERSION;
+  string version = PACKAGE_NAME " version " PACKAGE_VERSION;
 
   cout << version << ", Copyright (C) 2003 Peter Brian Clements." << endl
        << endl
@@ -49,8 +50,8 @@ int main(int argc, char *argv[])
   _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | /*_CRTDBG_CHECK_CRT_DF | */_CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-	printf("argc    = %d\n"  ,argc);
-	for (int i=0;i<argc;i++) { printf("argv[%d] = '%s'\n",i,argv[i]); }
+//	printf("argc    = %d\n"  ,argc);
+//	for (int i=0;i<argc;i++) { printf("argv[%d] = '%s'\n",i,argv[i]); }
 
 	// Parse the command line
 	CommandLine *commandline = new CommandLine;

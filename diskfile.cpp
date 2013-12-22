@@ -288,6 +288,10 @@
 		return longname;
 	}
 
+	//==============================================================================================================================================================
+	// Find Files
+	//==============================================================================================================================================================
+/*
 	list<string>* DiskFile::FindFiles(string path, string wildcard) {
 		list<string> *matches = new list<string>;
 
@@ -304,8 +308,8 @@
 		}
 		return matches;
 	}
-
-	bool DiskFile::FindFilesNew(string path, string wildcard, list<string>* filenames) {
+*/
+	bool DiskFile::FindFiles(string path, string wildcard, list<string>* filenames) {
 		list<string> *matches = new list<string>;
 		string ThisSearchPath = path + wildcard;   //Create the local path (keep unchanged original path & wildcard)
 
@@ -321,7 +325,7 @@
 				} else if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)!=0) {
 					if (fd.cFileName[0]!='.') {
 						string NewSearchPath = path + fd.cFileName + "\\";
-						DiskFile::FindFilesNew(NewSearchPath, wildcard, filenames);
+						DiskFile::FindFiles(NewSearchPath, wildcard, filenames);
 					}
 				}
 			} while (::FindNextFile(h, &fd));

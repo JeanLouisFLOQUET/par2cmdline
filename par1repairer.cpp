@@ -151,7 +151,7 @@ Result Par1Repairer::Process(const CommandLine &commandline, bool dorepair)
         if (!CreateTargetFiles())
           return eFileIOError;
 
-        // Work out which data blocks are available, which need to be recreated, 
+        // Work out which data blocks are available, which need to be recreated,
         // and compute the appropriate Reed Solomon matrix.
         if (!ComputeRSmatrix())
         {
@@ -239,7 +239,7 @@ bool Par1Repairer::LoadRecoveryFile(string filename)
   // Open the file
   if (!diskfile->Open(filename))
   {
-    // If we could not open the file, ignore the error and 
+    // If we could not open the file, ignore the error and
     // proceed to the next file
     delete diskfile;
     return true;
@@ -314,7 +314,7 @@ bool Par1Repairer::LoadRecoveryFile(string filename)
         break;
 
       // Are there any files?
-      if (fileheader.numberoffiles == 0 || 
+      if (fileheader.numberoffiles == 0 ||
           fileheader.filelistoffset < sizeof(PAR1FILEHEADER) ||
           fileheader.filelistsize == 0)
         break;
@@ -503,7 +503,8 @@ bool Par1Repairer::LoadOtherRecoveryFiles(string filename)
 
   // Search for additional PAR files
   string wildcard = name + ".???";
-  list<string> *files = DiskFile::FindFiles(path, wildcard);
+  list<string> *files = new list<string>;
+  DiskFile::FindFiles(path, wildcard, files);
 
   for (list<string>::const_iterator s=files->begin(); s!=files->end(); ++s)
   {
@@ -635,8 +636,8 @@ bool Par1Repairer::VerifySourceFiles(void)
 // Scan any extra files specified on the command line
 bool Par1Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafiles)
 {
-  for (ExtraFileIterator i=extrafiles.begin(); 
-       i!=extrafiles.end() && completefilecount<sourcefiles.size(); 
+  for (ExtraFileIterator i=extrafiles.begin();
+       i!=extrafiles.end() && completefilecount<sourcefiles.size();
        ++i)
   {
     string filename = i->FileName();
@@ -853,11 +854,11 @@ bool Par1Repairer::VerifyDataFile(DiskFile *diskfile, Par1RepairerSourceFile *so
         string targetname;
         DiskFile::SplitFilename(sourcefile->FileName(), path, targetname);
 
-        cout << "Target: \"" 
-              << name 
-              << "\" - is a match for \"" 
-              << targetname 
-              << "\"." 
+        cout << "Target: \""
+              << name
+              << "\" - is a match for \""
+              << targetname
+              << "\"."
               << endl;
       }
     }
@@ -868,11 +869,11 @@ bool Par1Repairer::VerifyDataFile(DiskFile *diskfile, Par1RepairerSourceFile *so
         string targetname;
         DiskFile::SplitFilename(match->FileName(), path, targetname);
 
-        cout << "File: \"" 
-              << name 
-              << "\" - is a match for \"" 
-              << targetname 
-              << "\"." 
+        cout << "File: \""
+              << name
+              << "\" - is a match for \""
+              << targetname
+              << "\"."
               << endl;
       }
     }
@@ -880,9 +881,9 @@ bool Par1Repairer::VerifyDataFile(DiskFile *diskfile, Par1RepairerSourceFile *so
   else
   {
     if (noiselevel > CommandLine:: nlSilent)
-      cout << "File: \"" 
-            << name 
-            << "\" - no data found." 
+      cout << "File: \""
+            << name
+            << "\" - no data found."
             << endl;
   }
 
@@ -960,7 +961,7 @@ bool Par1Repairer::CheckVerificationResults(void)
       if (noiselevel > CommandLine::nlQuiet)
       {
         if (recoveryblocks.size() > damagedfilecount+missingfilecount)
-          cout << "You have an excess of " 
+          cout << "You have an excess of "
                << (u32)recoveryblocks.size() - (damagedfilecount+missingfilecount)
                << " recovery files." << endl;
 
@@ -1006,7 +1007,7 @@ bool Par1Repairer::RenameTargetFiles(void)
     Par1RepairerSourceFile *sourcefile = *sf;
 
     // If the target file exists but is not a complete version of the file
-    if (sourcefile->GetTargetExists() && 
+    if (sourcefile->GetTargetExists() &&
         sourcefile->GetTargetFile() != sourcefile->GetCompleteFile())
     {
       DiskFile *targetfile = sourcefile->GetTargetFile();
@@ -1106,7 +1107,7 @@ bool Par1Repairer::CreateTargetFiles(void)
   return true;
 }
 
-// Work out which data blocks are available, which need to be recreated, 
+// Work out which data blocks are available, which need to be recreated,
 // and compute the appropriate Reed Solomon matrix.
 bool Par1Repairer::ComputeRSmatrix(void)
 {
@@ -1142,7 +1143,7 @@ bool Par1Repairer::ComputeRSmatrix(void)
       // Record that the block was found
       *pres = true;
 
-      // Add the block to the list of those which will be read 
+      // Add the block to the list of those which will be read
       // as input (and which might also need to be copied).
       *inputblock = sourceblock;
       ++inputblock;
@@ -1250,7 +1251,7 @@ bool Par1Repairer::ProcessData(u64 blockoffset, size_t blocklength)
   if (verifylist.size() > 0)
   {
     // For each input block
-    while (inputblock != inputblocks.end())       
+    while (inputblock != inputblocks.end())
     {
       // Read data from the current input block
       if (!(*inputblock)->ReadData(blockoffset, blocklength, inputbuffer))

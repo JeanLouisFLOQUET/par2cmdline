@@ -78,8 +78,8 @@ class DiskFile {
 		static u64 GetFileSize(string filename);
 
 		// Search the specified path for files which match the specified wildcard and return their names in a list.
-		static list<string>* FindFiles   (string path, string wildcard);
-		static bool          FindFilesNew(string path, string wildcard, list<string>* filenames);
+//		static list<string>* FindFiles(string path, string wildcard);
+		static bool          FindFiles(string path, string wildcard, list<string>* filenames);
 
 	protected:
 		string filename;

@@ -79,29 +79,23 @@
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
 
-/* Name of package */
-#define PACKAGE "par2cmdline"
-
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "peterbclements@users.sourceforge.net"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "par2cmdline"
 
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "0.5"
+
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "par2cmdline 0.4"
+#define PACKAGE_STRING PACKAGE_NAME " " PACKAGE_VERSION
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "par2cmdline"
-
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "0.4"
+#define PACKAGE_TARNAME PACKAGE_NAME
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
-
-/* Version number of package */
-#define VERSION "0.4"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
