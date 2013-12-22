@@ -403,14 +403,14 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 			}
 			else
 			{
-				list<string> *filenames;
+				list<string> *filenames = new list<string>;
 
 				// If the argument includes wildcard characters, search the disk for matching files
 				if (strchr(argv[0], '*') || strchr(argv[0], '?')) {
 					string path;
 					string name;
 					DiskFile::SplitFilename(argv[0], path, name);
-					filenames = FindFiles(path, name);
+					DiskFile::FindFilesNew(path, name, filenames);
 				} else {
 					filenames = new list<string>;
 					filenames->push_back(argv[0]);

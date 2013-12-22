@@ -305,6 +305,30 @@
 		return matches;
 	}
 
+	bool DiskFile::FindFilesNew(string path, string wildcard, list<string>* filenames) {
+		list<string> *matches = new list<string>;
+		string ThisSearchPath = path + wildcard;   //Create the local path (keep unchanged original path & wildcard)
+
+		WIN32_FIND_DATA fd;
+		HANDLE h = ::FindFirstFile(ThisSearchPath.c_str(), &fd);
+		if (h != INVALID_HANDLE_VALUE) {
+			do {
+				//This is NOT a directory (FILE_ATTRIBUTE_DIRECTORY = 0x10 = 16)
+				if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
+					filenames->push_back(path + fd.cFileName);
+
+				//This is a directory (FILE_ATTRIBUTE_DIRECTORY = 0x10 = 16)
+				} else if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)!=0) {
+					if (fd.cFileName[0]!='.') {
+						string NewSearchPath = path + fd.cFileName + "\\";
+						DiskFile::FindFilesNew(NewSearchPath, wildcard, filenames);
+					}
+				}
+			} while (::FindNextFile(h, &fd));
+			::FindClose(h);
+		}
+		return true;
+	}
 
 
 
