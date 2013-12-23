@@ -75,36 +75,41 @@ CommandLine::CommandLine(void)
 {
 }
 
-void CommandLine::usage(void)
-{
+void CommandLine::usage(void) {
 	cout <<
-		"\n"
-		"Usage:\n"
-		"\n"
-		"  par2 c(reate) [options] <par2 file> [files] : Create PAR2 files\n"
-		"  par2 v(erify) [options] <par2 file> [files] : Verify files using PAR2 file\n"
-		"  par2 r(epair) [options] <par2 file> [files] : Repair files using PAR2 files\n"
-		"\n"
-		"You may also leave out the \"c\", \"v\", and \"r\" commands by using \"parcreate\",\n"
-		"\"par2verify\", or \"par2repair\" instead.\n"
-		"\n"
-		"Options:\n"
-		"\n"
-		"  -b<n>  : Set the Block-Count\n"
-		"  -s<n>  : Set the Block-Size (Don't use both -b and -s)\n"
-		"  -r<n>  : Level of Redundancy (%%)\n"
-		"  -c<n>  : Recovery block count (Don't use both -r and -c)\n"
-		"  -f<n>  : First Recovery-Block-Number\n"
-		"  -u     : Uniform recovery file sizes\n"
-		"  -l     : Limit size of recovery files (Don't use both -u and -l)\n"
-		"  -n<n>  : Number of recovery files (Don't use both -n and -l)\n"
-		"  -m<n>  : Memory (in MB) to use\n"
-		"  -v [-v]: Be more verbose\n"
-		"  -q [-q]: Be more quiet (-q -q gives silence)\n"
-		"  --     : Treat all remaining CommandLine as filenames\n"
-		"\n"
-		"If you wish to create par2 files for a single source file, you may leave\n"
-		"out the name of the par2 file from the command line.\n";
+		                                                                                      "\n"
+		"Usage:"                                                                              "\n"
+		                                                                                      "\n"
+		"  par2 c(reate) [options] <par2 file> [files] : Create PAR2 files"                   "\n"
+		"  par2 v(erify) [options] <par2 file> [files] : Verify files using PAR2 file"        "\n"
+		"  par2 r(epair) [options] <par2 file> [files] : Repair files using PAR2 files"       "\n"
+		                                                                                      "\n"
+		"You may also leave out the \"c\", \"v\", and \"r\" commands by using \"parcreate\"," "\n"
+		"\"par2verify\", or \"par2repair\" instead."                                          "\n"
+		                                                                                      "\n"
+		"Options:"                                                                            "\n"
+		                                                                                      "\n"
+		"  Block property (choose only one) :"                                                "\n"
+		"     -b<n>  : Set the Block-Count"                                                   "\n"
+		"     -s<n>  : Set the Block-Size "                                                   "\n"
+		"  Redundancy (choose only one) :"                                                    "\n"
+		"     -r<n>  : Level of Redundancy (%%)"                                              "\n"
+		"     -c<n>  : Recovery block count"                                                  "\n"
+		"  Recovery files (choose only one) :"                                                "\n"
+		"     -u     : Uniform recovery file sizes"                                           "\n"
+		"     -l     : Limit size of recovery files               (don't use with -u)"        "\n"
+		"  Number of recovery files"                                                          "\n"
+		"     -n<n>  : hard fixed)                                (don't use with -l or -N)"  "\n"
+		"     -N<n>  : can be reduced if not enough source blocks (don't use with -l or -n)"  "\n"
+		"  Misc :"                                                                            "\n"
+		"     -f<n>  : First Recovery-Block-Number"                                           "\n"
+		"     -m<n>  : Memory (in MB) to use"                                                 "\n"
+		"     -v [-v]: Be more verbose"                                                       "\n"
+		"     -q [-q]: Be more quiet (-q -q gives silence)"                                   "\n"
+		"     --     : Treat all remaining CommandLine as filenames"                          "\n"
+		                                                                                      "\n"
+		"If you wish to create par2 files for a single source file, you may leave"            "\n"
+		"out the name of the par2 file from the command line."                                "\n";
 }
 
 bool CommandLine::Parse(int argc, char *argv[]) {
@@ -145,6 +150,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 	}
 
 	bool options = true;
+	RecoveryFileCountAdjust = false;
 
 	while (argc>0) {
 		if (argv[0][0]) {
@@ -154,8 +160,11 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 			}
 
 			if (options) {
-				switch (tolower(argv[0][1])) {
-				case 'b': {  // Set the block count
+				switch (argv[0][1]) {
+				//==============================================================================================================================
+				// Set the block count
+				//==============================================================================================================================
+				case 'b': {
 						if (operation != opCreate) {
 							cerr << "Cannot specify block count unless creating." << endl;
 							return false;
@@ -177,7 +186,10 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 's': {  // Set the block size
+				//==============================================================================================================================
+				// Set the block size
+				//==============================================================================================================================
+				case 's': {
 						if (operation != opCreate) { cerr << "Cannot specify block size unless creating." << endl; return false; }
 
 						     if (blocksize  > 0) { cerr << "Cannot specify block size twice."                << endl; return false; }
@@ -193,7 +205,10 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'r': { // Set the amount of redundancy required
+				//==============================================================================================================================
+				// Set the amount of redundancy required
+				//==============================================================================================================================
+				case 'r': {
 						if (operation != opCreate)      { cerr << "Cannot specify redundancy unless creating."               << endl; return false; }
 						if (redundancyset)              { cerr << "Cannot specify redundancy twice."                         << endl; return false; }
 						else if (recoveryblockcountset) { cerr << "Cannot specify both redundancy and recovery block count." << endl; return false; }
@@ -210,7 +225,10 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'c': { // Set the number of recovery blocks to create
+				//==============================================================================================================================
+				// Set the number of recovery blocks to create
+				//==============================================================================================================================
+				case 'c': {
 						if (operation != opCreate) { cerr << "Cannot specify recovery block count unless creating."     << endl; return false; }
 						if (recoveryblockcountset) { cerr << "Cannot specify recovery block count twice."               << endl; return false; }
 						else if (redundancyset)    { cerr << "Cannot specify both recovery block count and redundancy." << endl; return false; }
@@ -226,7 +244,10 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'f': { // Specify the First block recovery number
+				//==============================================================================================================================
+				// Specify the First block recovery number
+				//==============================================================================================================================
+				case 'f': {
 						if (operation != opCreate) { cerr << "Cannot specify first block number unless creating." << endl; return false; }
 						if (firstblock > 0)        { cerr << "Cannot specify first block twice."                  << endl; return false; }
 
@@ -239,7 +260,10 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'u': {  // Specify uniformly sized recovery files
+				//==============================================================================================================================
+				// Specify uniformly sized recovery files
+				//==============================================================================================================================
+				case 'u': {
 						if (operation != opCreate)           { cerr << "Cannot specify uniform files unless creating."  << endl; return false; }
 						if (argv[0][2])                      { cerr << "Invalid option: "                    << argv[0] << endl; return false; }
 						if (recoveryfilescheme != scUnknown) { cerr << "Cannot specify two recovery file size schemes." << endl; return false; }
@@ -247,7 +271,10 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'l': { // Limit the size of the recovery files
+				//==============================================================================================================================
+				// Limit the size of the recovery files
+				//==============================================================================================================================
+				case 'l': {
 						if (operation != opCreate          ) { cerr << "Cannot specify limit files unless creating."                       << endl; return false; }
 						if (argv[0][2]                     ) { cerr << "Invalid option: "                                       << argv[0] << endl; return false; }
 						if (recoveryfilescheme != scUnknown) { cerr << "Cannot specify two recovery file size schemes."                    << endl; return false; }
@@ -256,7 +283,11 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case 'n': { // Specify the number of recovery files
+				//==============================================================================================================================
+				// Specify the number of recovery files
+				//==============================================================================================================================
+				case 'n':
+				case 'N': {
 						if (operation != opCreate                           ) { cerr << "Cannot specify recovery file count unless creating."               << endl; return false; }
 						if (recoveryfilecount > 0                           ) { cerr << "Cannot specify recovery file count twice."                         << endl; return false; }
 						if (redundancyset && redundancy                 == 0) { cerr << "Cannot set file count when redundancy is set to 0."                << endl; return false; }
@@ -272,24 +303,24 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 							cerr << "Invalid recovery file count option: " << argv[0] << endl;
 							return false;
 						}
+
+						if (argv[0][1]=='N') { RecoveryFileCountAdjust = 1; }
+						if (argv[0][1]=='n') { RecoveryFileCountAdjust = 0; }
 					}
 					break;
 
-				case 'm': { // Specify how much memory to use for output buffers
-						if (memorylimit > 0) {
-							cerr << "Cannot specify memory limit twice." << endl;
-							return false;
-						}
+				//==============================================================================================================================
+				// Specify how much memory to use for output buffers
+				//==============================================================================================================================
+				case 'm': {
+						if (memorylimit > 0) { cerr << "Cannot specify memory limit twice." << endl; return false; }
 
 						char *p = &argv[0][2];
 						while (*p && isdigit(*p)) {
 							memorylimit = memorylimit * 10 + (*p - '0');
 							p++;
 						}
-						if (memorylimit == 0 || *p) {
-							cerr << "Invalid memory limit option: " << argv[0] << endl;
-							return false;
-						}
+						if (memorylimit == 0 || *p) { cerr << "Invalid memory limit option: " << argv[0] << endl; return false; }
 					}
 					break;
 
@@ -317,11 +348,8 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 				case 'q': {
 						switch (noiselevel) {
 						case nlUnknown: {
-								if (argv[0][2] == 'q') {
-									noiselevel = nlSilent;
-								} else {
-									noiselevel = nlQuiet;
-								}
+								if (argv[0][2] == 'q') { noiselevel = nlSilent; } 
+								else                   { noiselevel = nlQuiet ; }
 							}
 							break;
 						case nlQuiet :

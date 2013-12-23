@@ -18,128 +18,129 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #ifndef __PAR2CREATOR_H__
-#define __PAR2CREATOR_H__
+	#define __PAR2CREATOR_H__
 
-class MainPacket;
-class CreatorPacket;
-class CriticalPacket;
+	#include "commandline.h"
 
-class Par2Creator
-{
-public:
-  Par2Creator(void);
-  ~Par2Creator(void);
+	class MainPacket;
+	class CreatorPacket;
+	class CriticalPacket;
 
-  // Create recovery files from the source files specified on the command line
-  Result Process(const CommandLine &commandline);
+	class Par2Creator {
+	public:
+	  Par2Creator(void);
+	  ~Par2Creator(void);
 
-protected:
-  // Steps in the creation process:
+	  // Create recovery files from the source files specified on the command line
+	  Result Process(const CommandLine &commandline);
 
-  // Compute block size from block count or vice versa depending on which was
-  // specified on the command line
-  bool ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFile> &extrafiles);
+	protected:
+	  // Steps in the creation process:
 
-  // Determine how many recovery blocks to create based on the source block
-  // count and the requested level of redundancy.
-  bool ComputeRecoveryBlockCount(u32 redundancy);
+	  // Compute block size from block count or vice versa depending on which was
+	  // specified on the command line
+	  bool ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFile> &extrafiles);
 
-  // Determine how much recovery data can be computed on one pass
-  bool CalculateProcessBlockSize(size_t memorylimit);
+	  // Determine how many recovery blocks to create based on the source block
+	  // count and the requested level of redundancy.
+	  bool ComputeRecoveryBlockCount(u32 redundancy);
 
-  // Determine how many recovery files to create.
-  bool ComputeRecoveryFileCount(void);
+	  // Determine how much recovery data can be computed on one pass
+	  bool CalculateProcessBlockSize(size_t memorylimit);
 
-  // Open all of the source files, compute the Hashes and CRC values, and store
-  // the results in the file verification and file description packets.
-  bool OpenSourceFiles(const list<CommandLine::ExtraFile> &extrafiles);
+	  // Determine how many recovery files to create.
+	  bool ComputeRecoveryFileCount(void);
 
-  // Create the main packet and determine the set_id_hash to use with all packets
-  bool CreateMainPacket(void);
+	  // Open all of the source files, compute the Hashes and CRC values, and store
+	  // the results in the file verification and file description packets.
+	  bool OpenSourceFiles(const list<CommandLine::ExtraFile> &extrafiles);
 
-  // Create the creator packet.
-  bool CreateCreatorPacket(void);
+	  // Create the main packet and determine the set_id_hash to use with all packets
+	  bool CreateMainPacket(void);
 
-  // Initialise all of the source blocks ready to start reading data from the source files.
-  bool CreateSourceBlocks(void);
+	  // Create the creator packet.
+	  bool CreateCreatorPacket(void);
 
-  // Create all of the output files and allocate all packets to appropriate file offets.
-  bool InitialiseOutputFiles(string par2filename);
+	  // Initialise all of the source blocks ready to start reading data from the source files.
+	  bool CreateSourceBlocks(void);
 
-  // Allocate memory buffers for reading and writing data to disk.
-  bool AllocateBuffers(void);
+	  // Create all of the output files and allocate all packets to appropriate file offets.
+	  bool InitialiseOutputFiles(string par2filename);
 
-  // Compute the Reed Solomon matrix
-  bool ComputeRSMatrix(void);
+	  // Allocate memory buffers for reading and writing data to disk.
+	  bool AllocateBuffers(void);
 
-  // Read source data, process it through the RS matrix and write it to disk.
-  bool ProcessData(u64 blockoffset, size_t blocklength);
+	  // Compute the Reed Solomon matrix
+	  bool ComputeRSMatrix(void);
 
-  // Finish computation of the recovery packets and write the headers to disk.
-  bool WriteRecoveryPacketHeaders(void);
+	  // Read source data, process it through the RS matrix and write it to disk.
+	  bool ProcessData(u64 blockoffset, size_t blocklength);
 
-  // Finish computing the full file hash values of the source files
-  bool FinishFileHashComputation(void);
+	  // Finish computation of the recovery packets and write the headers to disk.
+	  bool WriteRecoveryPacketHeaders(void);
 
-  // Fill in all remaining details in the critical packets.
-  bool FinishCriticalPackets(void);
+	  // Finish computing the full file hash values of the source files
+	  bool FinishFileHashComputation(void);
 
-  // Write all other critical packets to disk.
-  bool WriteCriticalPackets(void);
+	  // Fill in all remaining details in the critical packets.
+	  bool FinishCriticalPackets(void);
 
-  // Close all files.
-  bool CloseFiles(void);
+	  // Write all other critical packets to disk.
+	  bool WriteCriticalPackets(void);
 
-protected:
-  CommandLine::NoiseLevel noiselevel; // How noisy we should be
+	  // Close all files.
+	  bool CloseFiles(void);
 
-  u64 blocksize;      // The size of each block.
-  size_t chunksize;   // How much of each block will be processed at a 
-                      // time (due to memory constraints).
+	protected:
+	  CommandLine::NoiseLevel noiselevel; // How noisy we should be
 
-  void *inputbuffer;  // chunksize
-  void *outputbuffer; // chunksize * recoveryblockcount
-  
-  u32 sourcefilecount;   // Number of source files for which recovery data will be computed.
-  u32 sourceblockcount;  // Total number of data blocks that the source files will be
-                         // virtualy sliced into.
+	  u64 blocksize;      // The size of each block.
+	  size_t chunksize;   // How much of each block will be processed at a
+	                      // time (due to memory constraints).
 
-  u64 largestfilesize;   // The size of the largest source file
+	  void *inputbuffer;  // chunksize
+	  void *outputbuffer; // chunksize * recoveryblockcount
 
-  CommandLine::Scheme recoveryfilescheme;  // What scheme will be used to select the
-                                           // sizes for the recovery files.
-  
-  u32 recoveryfilecount;  // The number of recovery files that will be created
-  u32 recoveryblockcount; // The number of recovery blocks that will be placed
-                          // in the recovery files.
+	  u32 sourcefilecount;   // Number of source files for which recovery data will be computed.
+	  u32 sourceblockcount;  // Total number of data blocks that the source files will be
+	                         // virtualy sliced into.
 
-  u32 firstrecoveryblock; // The lowest exponent value to use for the recovery blocks.
+	  u64 largestfilesize;   // The size of the largest source file
 
-  MainPacket    *mainpacket;    // The main packet
-  CreatorPacket *creatorpacket; // The creator packet
+	  CommandLine::Scheme recoveryfilescheme;  // What scheme will be used to select the
+	                                           // sizes for the recovery files.
 
-  vector<Par2CreatorSourceFile*> sourcefiles;  // Array containing details of the source files
-                                               // as well as the file verification and file
-                                               // description packets for them.
+	  u32 recoveryfilecount       ; // The number of recovery files that will be created
+	  bool RecoveryFileCountAdjust; // Automatically reduce 'recoveryfilecount' if not enough recovery blocks
+	  u32 recoveryblockcount      ; // The number of recovery blocks that will be placed in the recovery files.
+	  u32 redundancy              ; // The percentage of redundacy to be created
+	  u32 firstrecoveryblock      ; // The lowest exponent value to use for the recovery blocks.
 
-  vector<DataBlock>          sourceblocks;     // Array with one entry for every source block.
+	  MainPacket    *mainpacket;    // The main packet
+	  CreatorPacket *creatorpacket; // The creator packet
 
-  vector<DiskFile>           recoveryfiles;    // Array with one entry for every recovery file.
-  vector<RecoveryPacket>     recoverypackets;  // Array with one entry for every recovery packet.
+	  vector<Par2CreatorSourceFile*> sourcefiles;  // Array containing details of the source files
+	                                               // as well as the file verification and file
+	                                               // description packets for them.
 
-  list<CriticalPacket*>      criticalpackets;  // A list of all of the critical packets.
-  list<CriticalPacketEntry>  criticalpacketentries; // A list of which critical packet will
-                                                    // be written to which recovery file.
+	  vector<DataBlock>          sourceblocks;     // Array with one entry for every source block.
 
-  ReedSolomon<Galois16> rs;   // The Reed Solomon matrix.
+	  vector<DiskFile>           recoveryfiles;    // Array with one entry for every recovery file.
+	  vector<RecoveryPacket>     recoverypackets;  // Array with one entry for every recovery packet.
 
-  u64 progress;     // How much data has been processed.
-  u64 totaldata;    // Total amount of data to be processed.
+	  list<CriticalPacket*>      criticalpackets;  // A list of all of the critical packets.
+	  list<CriticalPacketEntry>  criticalpacketentries; // A list of which critical packet will
+	                                                    // be written to which recovery file.
 
-  bool deferhashcomputation; // If we have enough memory to compute all recovery data
-                             // in one pass, then we can defer the computation of
-                             // the full file hash and block crc and hashes until
-                             // the recovery data is computed.
-};
+	  ReedSolomon<Galois16> rs;   // The Reed Solomon matrix.
+
+	  u64 progress;     // How much data has been processed.
+	  u64 totaldata;    // Total amount of data to be processed.
+
+	  bool deferhashcomputation; // If we have enough memory to compute all recovery data
+	                             // in one pass, then we can defer the computation of
+	                             // the full file hash and block crc and hashes until
+	                             // the recovery data is computed.
+	};
 
 #endif // __PAR2CREATOR_H__

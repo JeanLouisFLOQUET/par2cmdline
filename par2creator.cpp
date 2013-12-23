@@ -66,19 +66,20 @@ Par2Creator::~Par2Creator(void) {
 
 Result Par2Creator::Process(const CommandLine &commandline) {
 	// Get information from commandline
-	noiselevel                                    = commandline.GetNoiseLevel        ();
-	blocksize                                     = commandline.GetBlockSize         ();
-	sourceblockcount                              = commandline.GetBlockCount        ();
-	const list<CommandLine::ExtraFile> extrafiles = commandline.GetExtraFiles        ();
-	sourcefilecount                               = (u32)extrafiles.size             ();
-	u32 redundancy                                = commandline.GetRedundancy        ();
-	recoveryblockcount                            = commandline.GetRecoveryBlockCount();
-	recoveryfilecount                             = commandline.GetRecoveryFileCount ();
-	firstrecoveryblock                            = commandline.GetFirstRecoveryBlock();
-	recoveryfilescheme                            = commandline.GetRecoveryFileScheme();
-	string par2filename                           = commandline.GetParFilename       ();
-	size_t memorylimit                            = commandline.GetMemoryLimit       ();
-	largestfilesize                               = commandline.GetLargestSourceSize ();
+	noiselevel                                    = commandline.GetNoiseLevel             ();
+	blocksize                                     = commandline.GetBlockSize              ();
+	sourceblockcount                              = commandline.GetBlockCount             ();
+	const list<CommandLine::ExtraFile> extrafiles = commandline.GetExtraFiles             ();
+	sourcefilecount                               = (u32)extrafiles.size                  ();
+	redundancy                                    = commandline.GetRedundancy             ();
+	recoveryblockcount                            = commandline.GetRecoveryBlockCount     ();
+	recoveryfilecount                             = commandline.GetRecoveryFileCount      ();
+	RecoveryFileCountAdjust                       = commandline.GetRecoveryFileCountAdjust();
+	firstrecoveryblock                            = commandline.GetFirstRecoveryBlock     ();
+	recoveryfilescheme                            = commandline.GetRecoveryFileScheme     ();
+	string par2filename                           = commandline.GetParFilename            ();
+	size_t memorylimit                            = commandline.GetMemoryLimit            ();
+	largestfilesize                               = commandline.GetLargestSourceSize      ();
 
 	// Compute block size from block count or vice versa depending on which was
 	// specified on the command line
@@ -364,8 +365,7 @@ bool Par2Creator::CalculateProcessBlockSize(size_t memorylimit)
 }
 
 // Determine how many recovery files to create.
-bool Par2Creator::ComputeRecoveryFileCount(void)
-{
+bool Par2Creator::ComputeRecoveryFileCount(void) {
 	// Are we computing any recovery blocks
 	if (recoveryblockcount == 0) {
 		recoveryfilecount = 0;
@@ -391,9 +391,23 @@ bool Par2Creator::ComputeRecoveryFileCount(void)
 				}
 			}
 
-			if (recoveryfilecount > recoveryblockcount) {
+			if ((RecoveryFileCountAdjust) && (recoveryfilecount>recoveryblockcount)) { 
+				cout << "Adjusting number of recovery files :"                               "\n"                                        
+				        "    Total blocks in sources files : " << sourceblockcount   <<      "\n"          
+				        "    Redundancy                    : " << redundancy         << " %" "\n"
+				        "    Recovery blocks to create     : " << recoveryblockcount <<      "\n"  
+				        "    Recovery files                : " << recoveryfilecount  << " => " << recoveryblockcount << "\n";        
+				recoveryfilecount = recoveryblockcount; 
+			}
+
+			if (recoveryfilecount>recoveryblockcount) {
 				// You cannot have move recovery files that there are recovery blocks to put in them.
-				cerr << "Too many recovery files specified." << endl;
+				cerr << "Too many recovery files specified."                                 "\n"                                        
+				        "For information :"                                                  "\n"                                                 
+				        "    Total blocks in sources files : " << sourceblockcount   <<      "\n"          
+				        "    Redundancy                    : " << redundancy         << " %" "\n"
+				        "    Recovery blocks to create     : " << recoveryblockcount <<      "\n"  
+				        "    Recovery files  to create     : " << recoveryfilecount  <<      "\n";          
 				return false;
 			}
 		}
