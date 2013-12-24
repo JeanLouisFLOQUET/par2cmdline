@@ -267,7 +267,7 @@ do this then you may find that you can carry out a repair in a situation
 where you would not otherwise have sufficient recovery data.
 
 You can have par2cmdline scan all files that are in the current directory
-using a command such as:
+and sub-directories using a command such as:
 
   par2 r test.mpg.par2 *
 

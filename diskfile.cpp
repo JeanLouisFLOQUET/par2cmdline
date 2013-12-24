@@ -658,10 +658,10 @@ u64 DiskFile::GetFileSize(string filename) {
 	u64 result;
 
 	result = _stat64(filename.c_str(), &st);
-	if (st.st_size<0) {
-		cerr << "File '" << filename << "' returned a negative size (" << st.st_size << ")." << endl;
-		return false;
-	}
+//	if (st.st_size<0) {
+//		cerr << "File '" << filename << "' returned a negative size (" << st.st_size << ")." << endl;
+//		return false;
+//	}
 
 	if ((0 == stat64(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG))) {
 		return st.st_size;
@@ -686,15 +686,15 @@ string DiskFile::TranslateFilename(string filename) {
 				ok = false;
 			} else {
 				switch (ch) {
-					case '"':
-					case '*':
-					case '/':
-					case ':':
-					case '<':
-					case '>':
-					case '?':
-					case '\\':
-					case '|':
+					case '"' :
+					case '*' :
+					case '/' :
+					case ':' :
+					case '<' :
+					case '>' :
+					case '?' :
+//					case '\\':      // This character is now allowed (for sub-directory search)
+					case '|' :
 						ok = false;
 				}
 			}
@@ -713,7 +713,7 @@ string DiskFile::TranslateFilename(string filename) {
 			result += ch;
 		} else {
 			// convert problem characters to hex
-			result += ((ch >> 4) < 10) ? (ch >> 4) + '0' : (ch >> 4) + 'A'-10;
+			result += ((ch >>  4) < 10) ? (ch >>  4) + '0' : (ch >>  4) + 'A'-10;
 			result += ((ch & 0xf) < 10) ? (ch & 0xf) + '0' : (ch & 0xf) + 'A'-10;
 		}
 		++p;

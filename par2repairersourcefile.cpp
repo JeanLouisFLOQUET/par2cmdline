@@ -27,133 +27,109 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-Par2RepairerSourceFile::Par2RepairerSourceFile(DescriptionPacket *_descriptionpacket,
-                                               VerificationPacket *_verificationpacket)
-{
-  firstblocknumber = 0;
+Par2RepairerSourceFile::Par2RepairerSourceFile(DescriptionPacket *_descriptionpacket, VerificationPacket *_verificationpacket) {
+	firstblocknumber = 0;
 
-  descriptionpacket = _descriptionpacket;
-  verificationpacket = _verificationpacket;
+	descriptionpacket = _descriptionpacket;
+	verificationpacket = _verificationpacket;
 
 //  verificationhashtable = 0;
-
-  targetexists = false;
-  targetfile = 0;
-  completefile = 0;
+	targetexists = false;
+	targetfile = 0;
+	completefile = 0;
 }
 
-Par2RepairerSourceFile::~Par2RepairerSourceFile(void)
-{
-  delete descriptionpacket;
-  delete verificationpacket;
+Par2RepairerSourceFile::~Par2RepairerSourceFile(void) {
+	delete descriptionpacket;
+	delete verificationpacket;
 
 //  delete verificationhashtable;
 }
 
 
-void Par2RepairerSourceFile::SetDescriptionPacket(DescriptionPacket *_descriptionpacket)
-{
-  descriptionpacket = _descriptionpacket;
+void Par2RepairerSourceFile::SetDescriptionPacket(DescriptionPacket *_descriptionpacket) {
+	descriptionpacket = _descriptionpacket;
 }
 
-void Par2RepairerSourceFile::SetVerificationPacket(VerificationPacket *_verificationpacket)
-{
-  verificationpacket = _verificationpacket;
+void Par2RepairerSourceFile::SetVerificationPacket(VerificationPacket *_verificationpacket) {
+	verificationpacket = _verificationpacket;
 }
 
-void Par2RepairerSourceFile::ComputeTargetFileName(string path)
-{
-  // Get a version of the filename compatible with the OS
-  string filename = DiskFile::TranslateFilename(descriptionpacket->FileName());
+void Par2RepairerSourceFile::ComputeTargetFileName(string path) {
+	// Get a version of the filename compatible with the OS
+	string filename = DiskFile::TranslateFilename(descriptionpacket->FileName());
 
-  // Strip the path from the filename
-  string::size_type where;
-  if (string::npos != (where = filename.find_last_of('\\'))
-      || string::npos != (where = filename.find_last_of('/'))
-#ifdef WIN32
-      || string::npos != (where = filename.find_last_of(':'))
-#endif
-     )
-  {
-    filename = filename.substr(where+1);
-  }
-
-  targetfilename = path + filename;
+	// Strip the path from the filename
+	string::size_type where;
+	if (string::npos != (where = filename.find_last_of('\\'))
+	 || string::npos != (where = filename.find_last_of('/'))
+	#ifdef WIN32
+	 || string::npos != (where = filename.find_last_of(':'))
+	#endif
+	   ) {
+//		filename = filename.substr(where+1); // JLF
+	}
+	targetfilename = path + filename;
 }
 
-string Par2RepairerSourceFile::TargetFileName(void) const
-{
-  return targetfilename;
+string Par2RepairerSourceFile::TargetFileName(void) const {
+	return targetfilename;
 }
 
-void Par2RepairerSourceFile::SetTargetFile(DiskFile *diskfile)
-{
-  targetfile = diskfile;
+void Par2RepairerSourceFile::SetTargetFile(DiskFile *diskfile) {
+	targetfile = diskfile;
 }
 
-DiskFile* Par2RepairerSourceFile::GetTargetFile(void) const
-{
-  return targetfile;
+DiskFile* Par2RepairerSourceFile::GetTargetFile(void) const {
+	return targetfile;
 }
 
-void Par2RepairerSourceFile::SetTargetExists(bool exists)
-{
-  targetexists = exists;
+void Par2RepairerSourceFile::SetTargetExists(bool exists) {
+	targetexists = exists;
 }
 
-bool Par2RepairerSourceFile::GetTargetExists(void) const
-{
-  return targetexists;
+bool Par2RepairerSourceFile::GetTargetExists(void) const {
+	return targetexists;
 }
 
-void Par2RepairerSourceFile::SetCompleteFile(DiskFile *diskfile)
-{
-  completefile = diskfile;
+void Par2RepairerSourceFile::SetCompleteFile(DiskFile *diskfile) {
+	completefile = diskfile;
 }
 
-DiskFile* Par2RepairerSourceFile::GetCompleteFile(void) const
-{
-  return completefile;
+DiskFile* Par2RepairerSourceFile::GetCompleteFile(void) const {
+	return completefile;
 }
 
 // Remember which source and target blocks will be used by this file
 // and set their lengths appropriately
-void Par2RepairerSourceFile::SetBlocks(u32 _blocknumber,
-                                       u32 _blockcount,
-                                       vector<DataBlock>::iterator _sourceblocks, 
-                                       vector<DataBlock>::iterator _targetblocks,
-                                       u64 blocksize)
-{
-  firstblocknumber = _blocknumber;
-  blockcount = _blockcount;
-  sourceblocks = _sourceblocks;
-  targetblocks = _targetblocks;
+void Par2RepairerSourceFile::SetBlocks( u32 _blocknumber
+                                      , u32 _blockcount
+                                      , vector<DataBlock>::iterator _sourceblocks
+                                      , vector<DataBlock>::iterator _targetblocks
+                                      , u64 blocksize
+                                      ) {
+	firstblocknumber = _blocknumber;
+	blockcount = _blockcount;
+	sourceblocks = _sourceblocks;
+	targetblocks = _targetblocks;
 
-  if (blockcount > 0)
-  {
-    u64 filesize = descriptionpacket->FileSize();
+	if (blockcount > 0) {
+		u64 filesize = descriptionpacket->FileSize();
 
-    vector<DataBlock>::iterator sb = sourceblocks;
-    for (u32 blocknumber=0; blocknumber<blockcount; ++blocknumber, ++sb)
-    {
-      DataBlock &datablock = *sb;
-
-      u64 blocklength = min(blocksize, filesize-(u64)blocknumber*blocksize);
-
-      datablock.SetLength(blocklength);
-    }
-  }
+		vector<DataBlock>::iterator sb = sourceblocks;
+		for (u32 blocknumber=0; blocknumber<blockcount; ++blocknumber, ++sb) {
+			DataBlock &datablock = *sb;
+			u64 blocklength = min(blocksize, filesize-(u64)blocknumber*blocksize);
+			datablock.SetLength(blocklength);
+		}
+	}
 }
 
 // Determine the block count from the file size and block size.
-void Par2RepairerSourceFile::SetBlockCount(u64 blocksize)
-{
-  if (descriptionpacket)
-  {
-    blockcount = (u32)((descriptionpacket->FileSize() + blocksize-1) / blocksize);
-  }
-  else
-  {
-    blockcount = 0;
-  }
+void Par2RepairerSourceFile::SetBlockCount(u64 blocksize) {
+	if (descriptionpacket) {
+		blockcount = (u32)((descriptionpacket->FileSize() + blocksize-1) / blocksize);
+	} else {
+		blockcount = 0;
+	}
 }
