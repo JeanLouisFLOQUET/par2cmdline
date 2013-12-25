@@ -34,15 +34,13 @@ template <class g> class GaloisLongMultiplyTable;
 // carrying out multiplation of 16-bit galois numbers 8 bits at a time).
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-class GaloisTable
-{
+class GaloisTable {
 public:
   typedef valuetype ValueType;
 
   GaloisTable(void);
 
-  enum
-  {
+  enum {
     Bits = bits,
     Count = 1<<Bits,
     Limit = Count-1,
@@ -54,8 +52,7 @@ public:
 };
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-class Galois
-{
+class Galois {
 public:
   typedef valuetype ValueType;
 
@@ -96,8 +93,7 @@ public:
   ValueType Log(void) const;
   ValueType ALog(void) const;
 
-  enum 
-  {
+  enum {
     Bits  = GaloisTable<bits,generator,valuetype>::Bits,
     Count = GaloisTable<bits,generator,valuetype>::Count,
     Limit = GaloisTable<bits,generator,valuetype>::Limit,
@@ -110,16 +106,14 @@ protected:
 };
 
 #ifdef LONGMULTIPLY
-template <class g> 
-class GaloisLongMultiplyTable
-{
+template <class g>
+class GaloisLongMultiplyTable {
 public:
   GaloisLongMultiplyTable(void);
 
   typedef g G;
 
-  enum
-  {
+  enum {
     Bytes = ((G::Bits + 7) >> 3),
     Count = ((Bytes * (Bytes+1)) / 2),
   };
@@ -131,12 +125,10 @@ public:
 // Construct the log and antilog tables from the generator
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline GaloisTable<bits,generator,valuetype>::GaloisTable(void)
-{
+inline GaloisTable<bits,generator,valuetype>::GaloisTable(void) {
   u32 b = 1;
 
-  for (u32 l=0; l<Limit; l++)
-  {
+  for (u32 l=0; l<Limit; l++) {
     log[b]     = (ValueType)l;
     antilog[l] = (ValueType)b;
 
@@ -156,37 +148,30 @@ GaloisTable<bits,generator,valuetype> Galois<bits,generator,valuetype>::table;
 
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline Galois<bits,generator,valuetype>::Galois(typename Galois<bits,generator,valuetype>::ValueType v)
-{
+inline Galois<bits,generator,valuetype>::Galois(typename Galois<bits,generator,valuetype>::ValueType v) {
   value = v;
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline Galois<bits,generator,valuetype> Galois<bits,generator,valuetype>::operator * (const Galois<bits,generator,valuetype> &right) const
-{ 
+inline Galois<bits,generator,valuetype> Galois<bits,generator,valuetype>::operator * (const Galois<bits,generator,valuetype> &right) const {
   if (value == 0 || right.value == 0) return 0;
   unsigned int sum = table.log[value] + table.log[right.value];
-  if (sum >= Limit) 
-  {
+  if (sum >= Limit) {
     return table.antilog[sum-Limit];
   }
-  else
-  {
+  else {
     return table.antilog[sum];
   }
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::operator *= (const Galois<bits,generator,valuetype> &right)
-{ 
-  if (value == 0 || right.value == 0) 
-  {
+inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::operator *= (const Galois<bits,generator,valuetype> &right) {
+  if (value == 0 || right.value == 0) {
     value = 0;
   }
-  else
-  {
+  else {
     unsigned int sum = table.log[value] + table.log[right.value];
-    if (sum >= Limit) 
+    if (sum >= Limit)
     {
       value = table.antilog[sum-Limit];
     }
@@ -200,39 +185,33 @@ inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::opera
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline Galois<bits,generator,valuetype> Galois<bits,generator,valuetype>::operator / (const Galois<bits,generator,valuetype> &right) const
-{ 
+inline Galois<bits,generator,valuetype> Galois<bits,generator,valuetype>::operator / (const Galois<bits,generator,valuetype> &right) const {
   if (value == 0) return 0;
 
   assert(right.value != 0);
   if (right.value == 0) {return 0;} // Division by 0!
 
   int sum = table.log[value] - table.log[right.value];
-  if (sum < 0) 
-  {
+  if (sum < 0) {
     return table.antilog[sum+Limit];
   }
-  else
-  {
+  else {
     return table.antilog[sum];
   }
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::operator /= (const Galois<bits,generator,valuetype> &right)
-{ 
+inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::operator /= (const Galois<bits,generator,valuetype> &right) {
   if (value == 0) return *this;
 
   assert(right.value != 0);
   if (right.value == 0) {return *this;} // Division by 0!
 
   int sum = table.log[value] - table.log[right.value];
-  if (sum < 0) 
-  {
+  if (sum < 0) {
     value = table.antilog[sum+Limit];
   }
-  else
-  {
+  else {
     value = table.antilog[sum];
   }
 
@@ -240,58 +219,49 @@ inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::opera
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline Galois<bits,generator,valuetype> Galois<bits,generator,valuetype>::pow(unsigned int right) const
-{
+inline Galois<bits,generator,valuetype> Galois<bits,generator,valuetype>::pow(unsigned int right) const {
   if (right == 0) return 1;
   if (value == 0) return 0;
 
   unsigned int sum = table.log[value] * right;
 
   sum = (sum >> Bits) + (sum & Limit);
-  if (sum >= Limit) 
-  {
+  if (sum >= Limit) {
     return table.antilog[sum-Limit];
   }
-  else
-  {
+  else {
     return table.antilog[sum];
-  }  
+  }
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline Galois<bits,generator,valuetype> Galois<bits,generator,valuetype>::operator ^ (unsigned int right) const
-{
+inline Galois<bits,generator,valuetype> Galois<bits,generator,valuetype>::operator ^ (unsigned int right) const {
   if (right == 0) return 1;
   if (value == 0) return 0;
 
   unsigned int sum = table.log[value] * right;
 
   sum = (sum >> Bits) + (sum & Limit);
-  if (sum >= Limit) 
-  {
+  if (sum >= Limit) {
     return table.antilog[sum-Limit];
   }
-  else
-  {
+  else {
     return table.antilog[sum];
-  }  
+  }
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::operator ^= (unsigned int right)
-{
+inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::operator ^= (unsigned int right) {
   if (right == 1) {value = 1; return *this;}
   if (value == 0) return *this;
 
   unsigned int sum = table.log[value] * right;
 
   sum = (sum >> Bits) + (sum & Limit);
-  if (sum >= Limit) 
-  {
+  if (sum >= Limit) {
     value = table.antilog[sum-Limit];
   }
-  else
-  {
+  else {
     value = table.antilog[sum];
   }
 
@@ -299,25 +269,21 @@ inline Galois<bits,generator,valuetype>& Galois<bits,generator,valuetype>::opera
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline valuetype Galois<bits,generator,valuetype>::Log(void) const
-{
+inline valuetype Galois<bits,generator,valuetype>::Log(void) const {
   return table.log[value];
 }
 
 template <const unsigned int bits, const unsigned int generator, typename valuetype>
-inline valuetype Galois<bits,generator,valuetype>::ALog(void) const
-{
+inline valuetype Galois<bits,generator,valuetype>::ALog(void) const {
   return table.antilog[value];
 }
 
 #ifdef LONGMULTIPLY
-template <class g> 
-inline GaloisLongMultiplyTable<g>::GaloisLongMultiplyTable(void)
-{
+template <class g>
+inline GaloisLongMultiplyTable<g>::GaloisLongMultiplyTable(void) {
   G *table = tables;
 
-  for (unsigned int i=0; i<Bytes; i++)
-  {
+  for (unsigned int i=0; i<Bytes; i++) {
     for (unsigned int j=i; j<Bytes; j++)
     {
       for (unsigned int ii=0; ii<256; ii++)

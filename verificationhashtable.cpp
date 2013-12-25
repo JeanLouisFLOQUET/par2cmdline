@@ -27,81 +27,72 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-VerificationHashTable::VerificationHashTable(void)
-{
-  hashmask = 0;
-  hashtable = 0;
+VerificationHashTable::VerificationHashTable(void) {
+	hashmask = 0;
+	hashtable = 0;
 }
 
-VerificationHashTable::~VerificationHashTable(void)
-{
-  // Destroy the hash table
-  if (hashtable)
-  {
-    for (unsigned int entry=0; entry<=hashmask; entry++)
-    {
-      delete hashtable[entry];
-    }
-  }
+VerificationHashTable::~VerificationHashTable(void) {
+	// Destroy the hash table
+	if (hashtable) {
+		for (unsigned int entry=0; entry<=hashmask; entry++) {
+			delete hashtable[entry];
+		}
+	}
 
-  delete [] hashtable;
+	delete [] hashtable;
 }
 
 // Allocate the hash table with a reasonable size
-void VerificationHashTable::SetLimit(u32 limit)
-{
-  // Pick a good size for the hash table
-  hashmask = 256;
-  while (hashmask < limit && hashmask < 65536)
-  {
-    hashmask <<= 1;
-  }
+void VerificationHashTable::SetLimit(u32 limit) {
+	// Pick a good size for the hash table
+	hashmask = 256;
+	while (hashmask < limit && hashmask < 65536) {
+		hashmask <<= 1;
+	}
 
-  // Allocate and clear the hash table
-  hashtable = new VerificationHashEntry*[hashmask];
-  memset(hashtable, 0, hashmask * sizeof(hashtable[0]));
+	// Allocate and clear the hash table
+	hashtable = new VerificationHashEntry*[hashmask];
+	memset(hashtable, 0, hashmask * sizeof(hashtable[0]));
 
-  hashmask--;
+	hashmask--;
 }
 
 // Load data from a verification packet
-void VerificationHashTable::Load(Par2RepairerSourceFile *sourcefile, u64 blocksize)
-{
-  VerificationHashEntry *preventry = 0;
+void VerificationHashTable::Load(Par2RepairerSourceFile *sourcefile, u64 blocksize) {
+	VerificationHashEntry *preventry = 0;
 
-  // Get information from the sourcefile
-  VerificationPacket *verificationpacket = sourcefile->GetVerificationPacket();
-  u32 blockcount                         = verificationpacket->BlockCount();
+	// Get information from the sourcefile
+	VerificationPacket *verificationpacket = sourcefile->GetVerificationPacket();
+	u32 blockcount                         = verificationpacket->BlockCount();
 
-  // Iterate throught the data blocks for the source file and the verification
-  // entries in the verification packet.
-  vector<DataBlock>::iterator sourceblocks       = sourcefile->SourceBlocks();
-  const FILEVERIFICATIONENTRY *verificationentry = verificationpacket->VerificationEntry(0);
-  u32 blocknumber                                = 0;
+	// Iterate throught the data blocks for the source file and the verification
+	// entries in the verification packet.
+	vector<DataBlock>::iterator sourceblocks       = sourcefile->SourceBlocks();
+	const FILEVERIFICATIONENTRY *verificationentry = verificationpacket->VerificationEntry(0);
+	u32 blocknumber                                = 0;
 
-  while (blocknumber<blockcount)
-  {
-    DataBlock &datablock = *sourceblocks;
+	while (blocknumber<blockcount) {
+		DataBlock &datablock = *sourceblocks;
 
-    // Create a new VerificationHashEntry with the details for the current
-    // data block and verification entry.
-    VerificationHashEntry *entry = new VerificationHashEntry(sourcefile, 
-                                                             &datablock, 
-                                                             blocknumber == 0,
-                                                             verificationentry);
+		// Create a new VerificationHashEntry with the details for the current
+		// data block and verification entry.
+		VerificationHashEntry *entry = new VerificationHashEntry(sourcefile,
+																														 &datablock,
+																														 blocknumber == 0,
+																														 verificationentry);
 
-    // Insert the entry in the hash table
-    entry->Insert(&hashtable[entry->Checksum() & hashmask]);
+		// Insert the entry in the hash table
+		entry->Insert(&hashtable[entry->Checksum() & hashmask]);
 
-    // Make the previous entry point forwards to this one
-    if (preventry)
-    {
-      preventry->Next(entry);
-    }
-    preventry = entry;
+		// Make the previous entry point forwards to this one
+		if (preventry) {
+			preventry->Next(entry);
+		}
+		preventry = entry;
 
-    ++blocknumber;
-    ++sourceblocks;
-    ++verificationentry;
-  }
+		++blocknumber;
+		++sourceblocks;
+		++verificationentry;
+	}
 }

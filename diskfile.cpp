@@ -291,24 +291,6 @@
 	//==============================================================================================================================================================
 	// Find Files
 	//==============================================================================================================================================================
-/*
-	list<string>* DiskFile::FindFiles(string path, string wildcard) {
-		list<string> *matches = new list<string>;
-
-		wildcard = path + wildcard;
-		WIN32_FIND_DATA fd;
-		HANDLE h = ::FindFirstFile(wildcard.c_str(), &fd);
-		if (h != INVALID_HANDLE_VALUE) {
-			do {
-				if (0 == (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-					matches->push_back(path + fd.cFileName);
-				}
-			} while (::FindNextFile(h, &fd));
-			::FindClose(h);
-		}
-		return matches;
-	}
-*/
 	bool DiskFile::FindFiles(string path, string wildcard, list<string>* filenames) {
 		list<string> *matches = new list<string>;
 		string ThisSearchPath = path + wildcard;   //Create the local path (keep unchanged original path & wildcard)
@@ -337,9 +319,8 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #else // !WIN32
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_FSEEKO
-# define OffsetType off_t
+	#ifdef HAVE_FSEEKO
+		#define OffsetType off_t
 		#define MaxOffset ((off_t)0x7fffffffffffffffULL)
 		#define fseek fseeko
 	#else
@@ -431,8 +412,9 @@
 		return true;
 	}
 
+	//==============================================================================================================================================================
 	// Open the file
-
+	//==============================================================================================================================================================
 	bool DiskFile::Open(string _filename, u64 _filesize) {
 		assert(file == 0);
 
@@ -532,8 +514,7 @@
 		string::size_type where;
 
 		if ((where = wildcard.find_first_of('*')) != string::npos ||
-		    (where = wildcard.find_first_of('?')) != string::npos)
-		{
+				(where = wildcard.find_first_of('?')) != string::npos) {
 			string front = wildcard.substr(0, where);
 			bool multiple = wildcard[where] == '*';
 			string back = wildcard.substr(where+1);
@@ -633,13 +614,10 @@ void DiskFile::SplitFilename(string filename, string &path, string &name) {
 	string::size_type where;
 
 	if (string::npos != (where = filename.find_last_of('/')) ||
-			string::npos != (where = filename.find_last_of('\\')))
-	{
+			string::npos != (where = filename.find_last_of('\\'))) {
 		path = filename.substr(0, where+1);
 		name = filename.substr(where+1);
-	}
-	else
-	{
+	} else {
 		path = "." PATHSEP;
 		name = filename;
 	}
@@ -729,8 +707,7 @@ bool DiskFile::Rename(void) {
 
 	do {
 		int length = snprintf(newname, _MAX_PATH, "%s.%d", filename.c_str(), ++index);
-		if (length < 0)
-		{
+		if (length < 0) {
 			cerr << filename << " cannot be renamed." << endl;
 			return false;
 		}
@@ -767,8 +744,7 @@ string DiskFile::ErrorMessage(DWORD error) {
 											 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 											 (LPSTR)&lpMsgBuf,
 											 0,
-											 NULL))
-	{
+											 NULL)) {
 		result = (char*)lpMsgBuf;
 		LocalFree(lpMsgBuf);
 	} else {
@@ -780,8 +756,7 @@ string DiskFile::ErrorMessage(DWORD error) {
 }
 #endif
 
-DiskFileMap::DiskFileMap(void)
-{
+DiskFileMap::DiskFileMap(void) {
 }
 
 DiskFileMap::~DiskFileMap(void) {
@@ -793,8 +768,7 @@ DiskFileMap::~DiskFileMap(void) {
 	}
 }
 
-bool DiskFileMap::Insert(DiskFile *diskfile)
-{
+bool DiskFileMap::Insert(DiskFile *diskfile) {
 	string filename = diskfile->FileName();
 	assert(filename.length() != 0);
 
@@ -803,8 +777,7 @@ bool DiskFileMap::Insert(DiskFile *diskfile)
 	return location.second;
 }
 
-void DiskFileMap::Remove(DiskFile *diskfile)
-{
+void DiskFileMap::Remove(DiskFile *diskfile) {
 	string filename = diskfile->FileName();
 	assert(filename.length() != 0);
 

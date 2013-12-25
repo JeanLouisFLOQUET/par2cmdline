@@ -23,8 +23,7 @@
 // The file verification packet stores details that allow individual blocks
 // of valid data within a damaged file to be identified.
 
-class VerificationPacket : public CriticalPacket
-{
+class VerificationPacket : public CriticalPacket {
 public:
   // Construct the packet
   VerificationPacket(void) {};
@@ -55,22 +54,19 @@ protected:
   u32 blockcount;
 };
 
-inline const MD5Hash& VerificationPacket::FileId(void) const
-{
+inline const MD5Hash& VerificationPacket::FileId(void) const {
   assert(packetdata != 0);
 
   return ((FILEVERIFICATIONPACKET*)packetdata)->fileid;
 }
 
-inline u32 VerificationPacket::BlockCount(void) const
-{
+inline u32 VerificationPacket::BlockCount(void) const {
   assert(packetdata != 0);
 
   return blockcount;
 }
 
-inline const FILEVERIFICATIONENTRY* VerificationPacket::VerificationEntry(u32 blocknumber) const
-{
+inline const FILEVERIFICATIONENTRY* VerificationPacket::VerificationEntry(u32 blocknumber) const {
   assert(packetdata != 0);
 
 //  return &((FILEVERIFICATIONPACKET*)packetdata)->entries()[blocknumber];

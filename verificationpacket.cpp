@@ -29,75 +29,68 @@ static char THIS_FILE[]=__FILE__;
 
 // Create a packet large enough for the specified number of blocks
 
-bool VerificationPacket::Create(u32 _blockcount)
-{
-  blockcount = _blockcount;
+bool VerificationPacket::Create(u32 _blockcount) {
+	blockcount = _blockcount;
 
-  // Allocate a packet large enough to hold the required number of verification entries.
-  FILEVERIFICATIONPACKET *packet = (FILEVERIFICATIONPACKET*)AllocatePacket(sizeof(FILEVERIFICATIONPACKET) + blockcount * sizeof(FILEVERIFICATIONENTRY));
+	// Allocate a packet large enough to hold the required number of verification entries.
+	FILEVERIFICATIONPACKET *packet = (FILEVERIFICATIONPACKET*)AllocatePacket(sizeof(FILEVERIFICATIONPACKET) + blockcount * sizeof(FILEVERIFICATIONENTRY));
 
-  // Record everything we know in the packet.
-  packet->header.magic  = packet_magic;
-  packet->header.length = packetlength;
-  //packet->header.hash;  // Not known yet
-  //packet->header.setid; // Not known yet
-  packet->header.type   = fileverificationpacket_type;
+	// Record everything we know in the packet.
+	packet->header.magic  = packet_magic;
+	packet->header.length = packetlength;
+	//packet->header.hash;  // Not known yet
+	//packet->header.setid; // Not known yet
+	packet->header.type   = fileverificationpacket_type;
 
-  //packet->fileid;       // Not known yet
-  //packet->entries;      // Not known yet
+	//packet->fileid;       // Not known yet
+	//packet->entries;      // Not known yet
 
-  return true;
+	return true;
 }
 
-void VerificationPacket::FileId(const MD5Hash &fileid)
-{
-  assert(packetdata != 0);
+void VerificationPacket::FileId(const MD5Hash &fileid) {
+	assert(packetdata != 0);
 
-  // Store the fileid in the packet.
-  ((FILEVERIFICATIONPACKET*)packetdata)->fileid = fileid;
+	// Store the fileid in the packet.
+	((FILEVERIFICATIONPACKET*)packetdata)->fileid = fileid;
 }
 
-void VerificationPacket::SetBlockHashAndCRC(u32 blocknumber, const MD5Hash &hash, u32 crc)
-{
-  assert(packetdata != 0);
-  assert(blocknumber < blockcount);
+void VerificationPacket::SetBlockHashAndCRC(u32 blocknumber, const MD5Hash &hash, u32 crc) {
+	assert(packetdata != 0);
+	assert(blocknumber < blockcount);
 
-  // Store the block hash and block crc in the packet.
-  FILEVERIFICATIONENTRY &entry = ((FILEVERIFICATIONPACKET*)packetdata)->entries[blocknumber];
+	// Store the block hash and block crc in the packet.
+	FILEVERIFICATIONENTRY &entry = ((FILEVERIFICATIONPACKET*)packetdata)->entries[blocknumber];
 
-  entry.hash = hash;
-  entry.crc = crc;
+	entry.hash = hash;
+	entry.crc = crc;
 }
 
-bool VerificationPacket::Load(DiskFile *diskfile, u64 offset, PACKET_HEADER &header)
-{
-  // Is the packet large enough
-  if (header.length <= sizeof(FILEVERIFICATIONPACKET))
-  {
-    return false;
-  }
+bool VerificationPacket::Load(DiskFile *diskfile, u64 offset, PACKET_HEADER &header) {
+	// Is the packet large enough
+	if (header.length <= sizeof(FILEVERIFICATIONPACKET)) {
+		return false;
+	}
 
-  // Does the packet have a whole number of verification records
-  if (0 < ((header.length - sizeof(FILEVERIFICATIONPACKET)) % sizeof(FILEVERIFICATIONENTRY)))
-  {
-    return false;
-  }
+	// Does the packet have a whole number of verification records
+	if (0 < ((header.length - sizeof(FILEVERIFICATIONPACKET)) % sizeof(FILEVERIFICATIONENTRY))) {
+		return false;
+	}
 
-  // Is the packet too large
-  if (header.length > sizeof(FILEVERIFICATIONPACKET) + 32768 * sizeof(FILEVERIFICATIONENTRY))
-  {
-    return false;
-  }
+	// Is the packet too large
+	if (header.length > sizeof(FILEVERIFICATIONPACKET) + 32768 * sizeof(FILEVERIFICATIONENTRY)) {
+		return false;
+	}
 
-  // Allocate the packet
-  FILEVERIFICATIONPACKET *packet = (FILEVERIFICATIONPACKET*)AllocatePacket((size_t)header.length);
-  packet->header = header;
+	// Allocate the packet
+	FILEVERIFICATIONPACKET *packet = (FILEVERIFICATIONPACKET*)AllocatePacket((size_t)header.length);
+	packet->header = header;
 
-  // How many blocks are there
-  blockcount = (u32)((((FILEVERIFICATIONPACKET*)packetdata)->header.length - sizeof(FILEVERIFICATIONPACKET)) / sizeof(FILEVERIFICATIONENTRY));
+	// How many blocks are there
+	blockcount = (u32)((((FILEVERIFICATIONPACKET*)packetdata)->header.length - sizeof(FILEVERIFICATIONPACKET)) / sizeof(FILEVERIFICATIONENTRY));
 
-  // Read the rest of the packet
-  return diskfile->Read(offset + sizeof(PACKET_HEADER), 
-                        &packet->fileid, 
-                        (size_t)packet->header.length - sizeof(PACKET_HEADER));
+	// Read the rest of the packet
+	return diskfile->Read(offset + sizeof(PACKET_HEADER),
+												&packet->fileid,
+												(size_t)packet->header.length - sizeof(PACKET_HEADER));
 }

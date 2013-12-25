@@ -20,8 +20,7 @@
 #ifndef __PAR2REPAIRER_H__
 #define __PAR2REPAIRER_H__
 
-class Par2Repairer
-{
+class Par2Repairer {
 public:
   Par2Repairer(void);
   ~Par2Repairer(void);
@@ -78,7 +77,7 @@ protected:
   // Attempt to match the data in the DiskFile with the source file
   bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile);
 
-  // Perform a sliding window scan of the DiskFile looking for blocks of data that 
+  // Perform a sliding window scan of the DiskFile looking for blocks of data that
   // might belong to any of the source files (for which a verification packet was
   // available). If a block of data might be from more than one source file, prefer
   // the one specified by the "sourcefile" parameter. If the first data block
@@ -93,7 +92,7 @@ protected:
   // Find out how much data we have found
   void UpdateVerificationResults(void);
 
-  // Check the verification results and report the results 
+  // Check the verification results and report the results
   bool CheckVerificationResults(void);
 
   // Rename any damaged or missnamed target files.

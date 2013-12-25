@@ -29,14 +29,12 @@ class VerificationHashTable;
 // There is one VerificationHashEntry object for each data block in the original
 // source files.
 
-class VerificationHashEntry
-{
+class VerificationHashEntry {
 public:
   VerificationHashEntry(Par2RepairerSourceFile *_sourcefile,
                         DataBlock *_datablock,
                         bool _firstblock,
-                        const FILEVERIFICATIONENTRY *_verificationentry)
-  {
+                        const FILEVERIFICATIONENTRY *_verificationentry) {
     sourcefile = _sourcefile;
     datablock = _datablock;
     firstblock = _firstblock;
@@ -47,8 +45,7 @@ public:
     left = right = same = next = 0;
   }
 
-  ~VerificationHashEntry(void)
-  {
+  ~VerificationHashEntry(void) {
     delete left;
     delete right;
     delete same;
@@ -64,16 +61,13 @@ public:
   static const VerificationHashEntry* Search(const VerificationHashEntry *entry, const MD5Hash &hash);
 
   // Comparison operators for searching
-  bool operator <(const VerificationHashEntry &r) const 
-  {
+  bool operator <(const VerificationHashEntry &r) const {
     return crc < r.crc || crc == r.crc && hash < r.hash;
   }
-  bool operator >(const VerificationHashEntry &r) const 
-  {
+  bool operator >(const VerificationHashEntry &r) const {
     return crc > r.crc || crc == r.crc && hash > r.hash;
   }
-  bool operator ==(const VerificationHashEntry &r) const 
-  {
+  bool operator ==(const VerificationHashEntry &r) const {
     return crc == r.crc && hash == r.hash;
   }
   bool operator <=(const VerificationHashEntry &r) const {return !operator>(r);}
@@ -84,7 +78,7 @@ public:
   Par2RepairerSourceFile* SourceFile(void) const {return sourcefile;}
   const DataBlock* GetDataBlock(void) const {return datablock;}
   bool FirstBlock(void) const {return firstblock;}
-  
+
   // Set/Check the associated datablock
   void SetBlock(DiskFile *diskfile, u64 offset) const;
   bool IsSet(void) const;
@@ -117,21 +111,17 @@ protected:
   VerificationHashEntry *next;
 };
 
-inline void VerificationHashEntry::SetBlock(DiskFile *diskfile, u64 offset) const
-{
+inline void VerificationHashEntry::SetBlock(DiskFile *diskfile, u64 offset) const {
   datablock->SetLocation(diskfile, offset);
 }
 
-inline bool VerificationHashEntry::IsSet(void) const
-{
+inline bool VerificationHashEntry::IsSet(void) const {
   return datablock->IsSet();
 }
 
 // Insert a new entry in the tree
-inline void VerificationHashEntry::Insert(VerificationHashEntry **parent)
-{
-  while (*parent)
-  {
+inline void VerificationHashEntry::Insert(VerificationHashEntry **parent) {
+  while (*parent) {
     if (**parent < *this)
     {
       parent = &(*parent)->right;
@@ -146,8 +136,7 @@ inline void VerificationHashEntry::Insert(VerificationHashEntry **parent)
     }
   }
 
-  while (*parent)
-  {
+  while (*parent) {
     parent = &(*parent)->same;
   }
 
@@ -155,10 +144,8 @@ inline void VerificationHashEntry::Insert(VerificationHashEntry **parent)
 }
 
 // Search the tree for an entry with the correct crc
-inline const VerificationHashEntry* VerificationHashEntry::Search(const VerificationHashEntry *entry, u32 crc)
-{
-  while (entry)
-  {
+inline const VerificationHashEntry* VerificationHashEntry::Search(const VerificationHashEntry *entry, u32 crc) {
+  while (entry) {
     if (entry->crc < crc)
     {
       entry = entry->right;
@@ -177,12 +164,10 @@ inline const VerificationHashEntry* VerificationHashEntry::Search(const Verifica
 }
 
 // Search the tree for an entry with the correct hash
-inline const VerificationHashEntry* VerificationHashEntry::Search(const VerificationHashEntry *entry, const MD5Hash &hash)
-{
+inline const VerificationHashEntry* VerificationHashEntry::Search(const VerificationHashEntry *entry, const MD5Hash &hash) {
   u32 crc = entry->crc;
 
-  while (entry)
-  {
+  while (entry) {
     if (entry->crc < crc || entry->crc == crc && entry->hash < hash)
     {
       entry = entry->right;
@@ -207,8 +192,7 @@ inline const VerificationHashEntry* VerificationHashEntry::Search(const Verifica
 // It is initialised by loading data from all available verification packets for the
 // source files.
 
-class VerificationHashTable
-{
+class VerificationHashTable {
 public:
   VerificationHashTable(void);
   ~VerificationHashTable(void);
@@ -245,10 +229,8 @@ protected:
 };
 
 // Search for an entry with the specified crc
-inline const VerificationHashEntry* VerificationHashTable::Lookup(u32 crc) const
-{
-  if (hashmask)
-  {
+inline const VerificationHashEntry* VerificationHashTable::Lookup(u32 crc) const {
+  if (hashmask) {
     return VerificationHashEntry::Search(hashtable[crc & hashmask], crc);
   }
 
@@ -257,16 +239,14 @@ inline const VerificationHashEntry* VerificationHashTable::Lookup(u32 crc) const
 
 // Search for an entry with the specified hash
 inline const VerificationHashEntry* VerificationHashTable::Lookup(const VerificationHashEntry *entry,
-                                                                  const MD5Hash &hash)
-{
+                                                                  const MD5Hash &hash) {
   return VerificationHashEntry::Search(entry, hash);
 }
 
 inline const VerificationHashEntry* VerificationHashTable::FindMatch(const VerificationHashEntry *suggestedentry,
                                                                      const Par2RepairerSourceFile *sourcefile,
                                                                      FileCheckSummer &checksummer,
-                                                                     bool &duplicate) const
-{
+                                                                     bool &duplicate) const {
   duplicate = false;
 
   // Get the current checksum from the checksummer
@@ -276,8 +256,7 @@ inline const VerificationHashEntry* VerificationHashTable::FindMatch(const Verif
   bool havehash = false;
 
   // Do we know what the next entry should be
-  if (0 != suggestedentry)
-  {
+  if (0 != suggestedentry) {
     // Is the suggested match supposed to be the last one in the file
     if (suggestedentry->Next() == 0)
     {
@@ -321,8 +300,7 @@ inline const VerificationHashEntry* VerificationHashTable::FindMatch(const Verif
     return 0;
 
   // If we don't have the hash yet, get it
-  if (!havehash)
-  {
+  if (!havehash) {
     hash = checksummer.Hash();
   }
 
@@ -332,8 +310,7 @@ inline const VerificationHashEntry* VerificationHashTable::FindMatch(const Verif
     return 0;
 
   // Is there one match with the same checksum and hash, or many
-  if (nextentry->Same() == 0)
-  {
+  if (nextentry->Same() == 0) {
     // If the match is for a block that is part of a target file
     // for which we already have a complete match, then don't
     // return it.
@@ -363,7 +340,7 @@ inline const VerificationHashEntry* VerificationHashTable::FindMatch(const Verif
     if (nextentry == suggestedentry)
     {
       // Was the existing match in the same file as the new match
-      if (nextentry->IsSet() && 
+      if (nextentry->IsSet() &&
           nextentry->GetDataBlock()->GetDiskFile() == checksummer.GetDiskFile())
       {
         // Yes. Don't return it
@@ -393,22 +370,21 @@ inline const VerificationHashEntry* VerificationHashTable::FindMatch(const Verif
   }
 
   // Do we prefer to match entries for a particular source file
-  if (0 != sourcefile)
-  {
+  if (0 != sourcefile) {
     const VerificationHashEntry *currententry = nextentry;
     nextentry = 0;
 
     // We don't want entries for the wrong source file, ones that
     // have already been matched, or ones that are the wrong length
-    while (currententry && (currententry->SourceFile() != sourcefile || 
+    while (currententry && (currententry->SourceFile() != sourcefile ||
                             currententry->IsSet() ||
                             checksummer.ShortBlock() && checksummer.BlockLength() != currententry->GetDataBlock()->GetLength()
                            )
           )
     {
-      // If we found an unused entry (which was presumably for the wrong 
+      // If we found an unused entry (which was presumably for the wrong
       // source file) remember it (providing it is the correct length).
-      if (0 == nextentry && !(currententry->IsSet() || 
+      if (0 == nextentry && !(currententry->IsSet() ||
                               checksummer.ShortBlock() && checksummer.BlockLength() != currententry->GetDataBlock()->GetLength()
                              )
          )
@@ -428,14 +404,12 @@ inline const VerificationHashEntry* VerificationHashTable::FindMatch(const Verif
   while (nextentry && (nextentry->IsSet() ||
                        checksummer.ShortBlock() && checksummer.BlockLength() != nextentry->GetDataBlock()->GetLength()
                       )
-        )
-  {
+        ) {
     nextentry = nextentry->Same();
   }
 
   // Return what we have found
-  if (nextentry == 0)
-  {
+  if (nextentry == 0) {
     duplicate = true;
   }
 

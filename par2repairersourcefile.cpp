@@ -66,7 +66,7 @@ void Par2RepairerSourceFile::ComputeTargetFileName(string path) {
 	#ifdef WIN32
 	 || string::npos != (where = filename.find_last_of(':'))
 	#endif
-	   ) {
+		 ) {
 //		filename = filename.substr(where+1); // JLF
 	}
 	targetfilename = path + filename;

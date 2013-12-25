@@ -28,26 +28,24 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-void banner(void)
-{
-  string version = PACKAGE_NAME " version " PACKAGE_VERSION;
+void banner(void) {
+	string version = PACKAGE_NAME " version " PACKAGE_VERSION;
 
-  cout << version << ", Copyright (C) 2003 Peter Brian Clements." << endl
-       << endl
-       << "par2cmdline comes with ABSOLUTELY NO WARRANTY." << endl
-       << endl
-       << "This is free software, and you are welcome to redistribute it and/or modify" << endl
-       << "it under the terms of the GNU General Public License as published by the" << endl
-       << "Free Software Foundation; either version 2 of the License, or (at your" << endl
-       << "option) any later version. See COPYING for details." << endl
-       << endl;
+	cout << version << ", Copyright (C) 2003 Peter Brian Clements." << endl
+			 << endl
+			 << "par2cmdline comes with ABSOLUTELY NO WARRANTY." << endl
+			 << endl
+			 << "This is free software, and you are welcome to redistribute it and/or modify" << endl
+			 << "it under the terms of the GNU General Public License as published by the" << endl
+			 << "Free Software Foundation; either version 2 of the License, or (at your" << endl
+			 << "option) any later version. See COPYING for details." << endl
+			 << endl;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 #ifdef _MSC_VER
-  // Memory leak checking
-  _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | /*_CRTDBG_CHECK_CRT_DF | */_CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	// Memory leak checking
+	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | /*_CRTDBG_CHECK_CRT_DF | */_CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
 //	printf("argc    = %d\n"  ,argc);

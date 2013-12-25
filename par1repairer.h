@@ -20,8 +20,7 @@
 #ifndef __PAR1REPAIRER_H__
 #define __PAR1REPAIRER_H__
 
-class Par1Repairer
-{
+class Par1Repairer {
 public:
   Par1Repairer(void);
   ~Par1Repairer(void);
@@ -61,7 +60,7 @@ protected:
   // target DataBlocks to them, and remember them for later verification.
   bool CreateTargetFiles(void);
 
-  // Work out which data blocks are available, which need to be recreated, 
+  // Work out which data blocks are available, which need to be recreated,
   // and compute the appropriate Reed Solomon matrix.
   bool ComputeRSmatrix(void);
 

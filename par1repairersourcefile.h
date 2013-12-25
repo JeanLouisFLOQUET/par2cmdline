@@ -24,8 +24,7 @@
 // to record details about a particular source file and the data blocks
 // for that file.
 
-class Par1RepairerSourceFile
-{
+class Par1RepairerSourceFile {
 public:
   // Construct the object and set the description and verification packets
   Par1RepairerSourceFile(PAR1FILEENTRY *fileentry, string searchpath);

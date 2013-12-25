@@ -59,8 +59,7 @@ struct MAGIC      {u8 magic[8];} PACKED;
 struct PACKETTYPE {u8 type[16];} PACKED;
 
 // Every packet starts with a packet header.
-struct PACKET_HEADER
-{
+struct PACKET_HEADER {
   // Header
   MAGIC            magic;  // = {'P', 'A', 'R', '2', '\0', 'P', 'K', 'T'}
   leu64            length; // Length of entire packet including header
@@ -74,13 +73,11 @@ struct PACKET_HEADER
 // It contains a FileId used to pair it with a corresponding file description
 // packet, followed by an array of hash and crc values. The number of entries in
 // the array can be determined from the packet_length.
-struct FILEVERIFICATIONENTRY
-{
+struct FILEVERIFICATIONENTRY {
   MD5Hash        hash;
   leu32          crc;
 } PACKED;
-struct FILEVERIFICATIONPACKET
-{
+struct FILEVERIFICATIONPACKET {
   PACKET_HEADER         header;
   // Body
   MD5Hash               fileid;     // MD5hash of file_hash_16k, file_length, file_name
@@ -94,15 +91,14 @@ struct FILEVERIFICATIONPACKET
 // then it may not have a NULL termination. If the name of the file is not
 // an exact multiple of 4, then it will be padded with 0 bytes at the
 // end to make it up to a multiple of 4.
-struct FILEDESCRIPTIONPACKET
-{
+struct FILEDESCRIPTIONPACKET {
   PACKET_HEADER    header;
   // Body
   MD5Hash          fileid;    // MD5hash of [hash16k, length, name]
   MD5Hash          hashfull;  // MD5 Hash of the whole file
   MD5Hash          hash16k;   // MD5 Hash of the first 16k of the file
   leu64            length;    // Length of the file
-  u8               name[];    // Name of the file, padded with 1 to 3 zero bytes to reach 
+  u8               name[];    // Name of the file, padded with 1 to 3 zero bytes to reach
                               // a multiple of 4 bytes.
                               // Actual length can be determined from overall packet
                               // length and then working backwards to find the first non
@@ -122,8 +118,7 @@ struct FILEDESCRIPTIONPACKET
 // of recoverable files. The extra entries correspond to files that were not
 // used during the creation of the recovery files and which may not therefore
 // be repaired if they are found to be damaged.
-struct MAINPACKET
-{
+struct MAINPACKET {
   PACKET_HEADER    header;
   // Body
   leu64            blocksize;
@@ -136,8 +131,7 @@ struct MAINPACKET
 // The creator packet is used to identify which program created a particular
 // recovery file. It is not required for verification or recovery of damaged
 // files.
-struct CREATORPACKET
-{
+struct CREATORPACKET {
   PACKET_HEADER    header;
   // Body
   u8               client[];
@@ -146,8 +140,7 @@ struct CREATORPACKET
 
 // The recovery block packet contains a single block of recovery data along
 // with the exponent value used during the computation of that block.
-struct RECOVERYBLOCKPACKET
-{
+struct RECOVERYBLOCKPACKET {
   PACKET_HEADER    header;
   // Body
   leu32            exponent;
@@ -167,23 +160,19 @@ struct RECOVERYBLOCKPACKET
 
 // Operators for comparing the MAGIC and PACKETTYPE values
 
-inline bool operator == (const MAGIC &left, const MAGIC &right)
-{
+inline bool operator == (const MAGIC &left, const MAGIC &right) {
   return (0==memcmp(&left, &right, sizeof(left)));
 }
 
-inline bool operator != (const MAGIC &left, const MAGIC &right)
-{
+inline bool operator != (const MAGIC &left, const MAGIC &right) {
   return !operator==(left, right);
 }
 
-inline bool operator == (const PACKETTYPE &left, const PACKETTYPE &right)
-{
+inline bool operator == (const PACKETTYPE &left, const PACKETTYPE &right) {
   return (0==memcmp(&left, &right, sizeof(left)));
 }
 
-inline bool operator != (const PACKETTYPE &left, const PACKETTYPE &right)
-{
+inline bool operator != (const PACKETTYPE &left, const PACKETTYPE &right) {
   return !operator==(left, right);
 }
 

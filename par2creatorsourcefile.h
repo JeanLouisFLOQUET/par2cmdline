@@ -27,8 +27,7 @@ class DiskFile;
 // The Par2CreatorSourceFile contains the file verification and file description
 // packet for one source file.
 
-class Par2CreatorSourceFile
-{
+class Par2CreatorSourceFile {
 private:
   // Don't permit copying or assignment
   Par2CreatorSourceFile(const Par2CreatorSourceFile &other);

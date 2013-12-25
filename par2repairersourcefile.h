@@ -20,8 +20,7 @@
 #ifndef __PAR2REPAIRERSOURCEFILE_H__
 #define __PAR2REPAIRERSOURCEFILE_H__
 
-enum MatchType
-{
+enum MatchType {
   eNoMatch = 0,
   ePartialMatch,
   eFullMatch
@@ -31,8 +30,7 @@ enum MatchType
 // to record details about a particular source file and the data blocks
 // for that file.
 
-class Par2RepairerSourceFile
-{
+class Par2RepairerSourceFile {
 public:
   // Construct the object and set the description and verification packets
   Par2RepairerSourceFile(DescriptionPacket  *descriptionpacket,
@@ -51,7 +49,7 @@ public:
   // file and set the length of each allocated block correctly.
   void SetBlocks(u32 _blocknumber,
                  u32 _blockcount,
-                 vector<DataBlock>::iterator _sourceblocks, 
+                 vector<DataBlock>::iterator _sourceblocks,
                  vector<DataBlock>::iterator _targetblocks,
                  u64 blocksize);
 

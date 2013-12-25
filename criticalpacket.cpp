@@ -27,22 +27,20 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-bool CriticalPacket::WritePacket(DiskFile &diskfile, u64 fileoffset) const
-{
-  assert(&diskfile != 0 && packetdata != 0 && packetlength != 0);
+bool CriticalPacket::WritePacket(DiskFile &diskfile, u64 fileoffset) const {
+	assert(&diskfile != 0 && packetdata != 0 && packetlength != 0);
 
-  return diskfile.Write(fileoffset, packetdata, packetlength);
+	return diskfile.Write(fileoffset, packetdata, packetlength);
 }
 
-void CriticalPacket::FinishPacket(const MD5Hash &setid)
-{
-  assert(packetdata != 0 && packetlength >= sizeof(PACKET_HEADER));
+void CriticalPacket::FinishPacket(const MD5Hash &setid) {
+	assert(packetdata != 0 && packetlength >= sizeof(PACKET_HEADER));
 
-  PACKET_HEADER *header = (PACKET_HEADER*)packetdata;
-  header->setid = setid;
+	PACKET_HEADER *header = (PACKET_HEADER*)packetdata;
+	header->setid = setid;
 
-  MD5Context packetcontext;
-  packetcontext.Update(&header->setid, packetlength - offsetof(PACKET_HEADER, setid));
-  packetcontext.Final(header->hash);
+	MD5Context packetcontext;
+	packetcontext.Update(&header->setid, packetlength - offsetof(PACKET_HEADER, setid));
+	packetcontext.Final(header->hash);
 }
 

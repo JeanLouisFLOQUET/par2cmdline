@@ -27,8 +27,7 @@
 // recovery block that either needs to be created or is available for
 // use.
 
-class RSOutputRow
-{
+class RSOutputRow {
 public:
   RSOutputRow(void) {};
   RSOutputRow(bool _present, u16 _exponent) : present(_present), exponent(_exponent) {}
@@ -39,8 +38,7 @@ public:
 };
 
 template<class g>
-class ReedSolomon
-{
+class ReedSolomon {
 public:
   typedef g G;
 
@@ -68,16 +66,16 @@ public:
 protected:
   // Perform Gaussian Elimination
   bool GaussElim(CommandLine::NoiseLevel noiselevel,
-                 unsigned int rows, 
-                 unsigned int leftcols, 
-                 G *leftmatrix, 
-                 G *rightmatrix, 
+                 unsigned int rows,
+                 unsigned int leftcols,
+                 G *leftmatrix,
+                 G *rightmatrix,
                  unsigned int datamissing);
 
 protected:
   u32 inputcount;        // Total number of input blocks
 
-  u32 datapresent;       // Number of input blocks that are present 
+  u32 datapresent;       // Number of input blocks that are present
   u32 datamissing;       // Number of input blocks that are missing
   u32 *datapresentindex; // The index numbers of the data blocks that are present
   u32 *datamissingindex; // The index numbers of the data blocks that are missing
@@ -105,8 +103,7 @@ protected:
 };
 
 template<class g>
-inline ReedSolomon<g>::ReedSolomon(void)
-{
+inline ReedSolomon<g>::ReedSolomon(void) {
   inputcount = 0;
 
   datapresent = 0;
@@ -132,8 +129,7 @@ inline ReedSolomon<g>::ReedSolomon(void)
 }
 
 template<class g>
-inline ReedSolomon<g>::~ReedSolomon(void)
-{
+inline ReedSolomon<g>::~ReedSolomon(void) {
   delete [] datapresentindex;
   delete [] datamissingindex;
   delete [] database;
@@ -151,20 +147,17 @@ u32 gcd(u32 a, u32 b);
 // Record whether the recovery block with the specified
 // exponent values is present or missing.
 template<class g>
-inline bool ReedSolomon<g>::SetOutput(bool present, u16 exponent)
-{
+inline bool ReedSolomon<g>::SetOutput(bool present, u16 exponent) {
   // Store the exponent and whether or not the recovery block is present or missing
   outputrows.push_back(RSOutputRow(present, exponent));
 
   outputcount++;
 
   // Update the counts.
-  if (present)
-  {
+  if (present) {
     parpresent++;
   }
-  else
-  {
+  else {
     parmissing++;
   }
 
@@ -174,10 +167,8 @@ inline bool ReedSolomon<g>::SetOutput(bool present, u16 exponent)
 // Record whether the recovery blocks with the specified
 // range of exponent values are present or missing.
 template<class g>
-inline bool ReedSolomon<g>::SetOutput(bool present, u16 lowexponent, u16 highexponent)
-{
-  for (unsigned int exponent=lowexponent; exponent<=highexponent; exponent++)
-  {
+inline bool ReedSolomon<g>::SetOutput(bool present, u16 lowexponent, u16 highexponent) {
+  for (unsigned int exponent=lowexponent; exponent<=highexponent; exponent++) {
     if (!SetOutput(present, exponent))
       return false;
   }
@@ -187,18 +178,15 @@ inline bool ReedSolomon<g>::SetOutput(bool present, u16 lowexponent, u16 highexp
 
 // Construct the Vandermonde matrix and solve it if necessary
 template<class g>
-inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel)
-{
+inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel) {
   u32 outcount = datamissing + parmissing;
   u32 incount = datapresent + datamissing;
 
-  if (datamissing > parpresent)
-  {
+  if (datamissing > parpresent) {
     cerr << "Not enough recovery blocks." << endl;
     return false;
   }
-  else if (outcount == 0)
-  {
+  else if (outcount == 0) {
     cerr << "No output blocks." << endl;
     return false;
   }
@@ -229,8 +217,7 @@ inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel)
   // Allocate the right hand matrix only if we are recovering
 
   G *rightmatrix = 0;
-  if (datamissing > 0)
-  {
+  if (datamissing > 0) {
     rightmatrix = new G[outcount * outcount];
     memset(rightmatrix, 0, outcount *outcount * sizeof(G));
   }
@@ -240,8 +227,7 @@ inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel)
   vector<RSOutputRow>::const_iterator outputrow = outputrows.begin();
 
   // One row for each present recovery block that will be used for a missing data block
-  for (unsigned int row=0; row<datamissing; row++)
-  {
+  for (unsigned int row=0; row<datamissing; row++) {
     if (noiselevel > CommandLine::nlQuiet)
     {
       int progress = row * 1000 / (datamissing+parmissing);
@@ -284,8 +270,7 @@ inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel)
   }
   // One row for each recovery block being computed
   outputrow = outputrows.begin();
-  for (unsigned int row=0; row<parmissing; row++)
-  {
+  for (unsigned int row=0; row<parmissing; row++) {
     if (noiselevel > CommandLine::nlQuiet)
     {
       int progress = (row+datamissing) * 1000 / (datamissing+parmissing);
@@ -330,9 +315,8 @@ inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel)
     cout << "Constructing: done." << endl;
 
   // Solve the matrices only if recovering data
-  if (datamissing > 0)
-  {
-    // Perform Gaussian Elimination and then delete the right matrix (which 
+  if (datamissing > 0) {
+    // Perform Gaussian Elimination and then delete the right matrix (which
     // will no longer be required).
     bool success = GaussElim(noiselevel, outcount, incount, leftmatrix, rightmatrix, datamissing);
     delete [] rightmatrix;
@@ -344,10 +328,8 @@ inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel)
 
 // Use Gaussian Elimination to solve the matrices
 template<class g>
-inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsigned int rows, unsigned int leftcols, G *leftmatrix, G *rightmatrix, unsigned int datamissing)
-{
-  if (noiselevel == CommandLine::nlDebug)
-  {
+inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsigned int rows, unsigned int leftcols, G *leftmatrix, G *rightmatrix, unsigned int datamissing) {
+  if (noiselevel == CommandLine::nlDebug) {
     for (unsigned int row=0; row<rows; row++)
     {
       cout << ((row==0) ? "/"    : (row==rows-1) ? "\\"    : "|");
@@ -383,8 +365,7 @@ inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsign
   int progress = 0;
 
   // For each row in the matrix
-  for (unsigned int row=0; row<datamissing; row++)
-  {
+  for (unsigned int row=0; row<datamissing; row++) {
     // NB Row and column swapping to find a non zero pivot value or to find the largest value
     // is not necessary due to the nature of the arithmetic and construction of the RS matrix.
 
@@ -478,8 +459,7 @@ inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsign
   }
   if (noiselevel > CommandLine::nlQuiet)
     cout << "Solving: done." << endl;
-  if (noiselevel == CommandLine::nlDebug)
-  {
+  if (noiselevel == CommandLine::nlDebug) {
     for (unsigned int row=0; row<rows; row++)
     {
       cout << ((row==0) ? "/"    : (row==rows-1) ? "\\"    : "|");

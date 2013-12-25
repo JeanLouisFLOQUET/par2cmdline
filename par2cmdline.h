@@ -205,8 +205,7 @@ typedef   unsigned long long   u64;
 #endif
 
 // Return type of par2cmdline
-typedef enum Result
-{
+typedef enum Result {
   eSuccess                     = 0,
 
   eRepairPossible              = 1,  // Data files are damaged and there is
@@ -290,7 +289,7 @@ using namespace std;
 #include "par1repairersourcefile.h"
 #include "par1repairer.h"
 
-// Heap checking 
+// Heap checking
 #ifdef _MSC_VER
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>

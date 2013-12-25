@@ -26,8 +26,7 @@
 // It also specifies how many of the source files are repairable
 // and in what order they should be processed.
 
-class MainPacket : public CriticalPacket
-{
+class MainPacket : public CriticalPacket {
 public:
   // Construct the packet
   MainPacket(void) {};
@@ -36,7 +35,7 @@ public:
 public:
   // Construct the main packet from the source file list and block size.
   // "sourcefiles" will be sorted base on their FileId value.
-  bool Create(vector<Par2CreatorSourceFile*> &sourcefiles, 
+  bool Create(vector<Par2CreatorSourceFile*> &sourcefiles,
               u64 _blocksize);
 
   // Load a main packet from a specified file
@@ -63,32 +62,28 @@ protected:
 };
 
 // Get the data block size
-inline u64 MainPacket::BlockSize(void) const
-{
+inline u64 MainPacket::BlockSize(void) const {
   assert(packetdata != 0);
 
   return blocksize;
 }
 
 // Get the number of recoverable files
-inline u32 MainPacket::RecoverableFileCount(void) const
-{
+inline u32 MainPacket::RecoverableFileCount(void) const {
   assert(packetdata != 0);
 
   return recoverablefilecount;
 }
 
 // Get the total number of files
-inline u32 MainPacket::TotalFileCount(void) const
-{
+inline u32 MainPacket::TotalFileCount(void) const {
   assert(packetdata != 0);
 
   return totalfilecount;
 }
 
 // Get the file id hash of one of the files
-inline const MD5Hash& MainPacket::FileId(u32 filenumber) const
-{
+inline const MD5Hash& MainPacket::FileId(u32 filenumber) const {
   assert(packetdata != 0);
   assert(filenumber<totalfilecount);
 
@@ -96,8 +91,7 @@ inline const MD5Hash& MainPacket::FileId(u32 filenumber) const
   return ((const MAINPACKET*)packetdata)->fileid[filenumber];
 }
 
-inline const MD5Hash& MainPacket::SetId(void) const
-{
+inline const MD5Hash& MainPacket::SetId(void) const {
   return ((const MAINPACKET*)packetdata)->header.setid;
 }
 

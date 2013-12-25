@@ -33,8 +33,7 @@
 
 struct PAR1MAGIC {u8 magic[8];}PACKED;
 
-struct PAR1FILEHEADER
-{
+struct PAR1FILEHEADER {
   PAR1MAGIC   magic;
   leu32       fileversion;
   leu32       programversion;
@@ -48,8 +47,7 @@ struct PAR1FILEHEADER
   leu64       datasize;
 }PACKED;
 
-struct PAR1FILEENTRY
-{
+struct PAR1FILEENTRY {
   leu64       entrysize;
   leu64       status;
   leu64       filesize;
@@ -58,8 +56,7 @@ struct PAR1FILEENTRY
   leu16       name[];
 }PACKED;
 
-enum FILEENTRYSTATUS
-{
+enum FILEENTRYSTATUS {
   INPARITYVOLUME = 1,
   CHECKED = 2,
 };
@@ -75,13 +72,11 @@ enum FILEENTRYSTATUS
 
 // Operators for comparing the MAGIC values
 
-inline bool operator == (const PAR1MAGIC &left, const PAR1MAGIC &right)
-{
+inline bool operator == (const PAR1MAGIC &left, const PAR1MAGIC &right) {
   return (0==memcmp(&left, &right, sizeof(left)));
 }
 
-inline bool operator != (const PAR1MAGIC &left, const PAR1MAGIC &right)
-{
+inline bool operator != (const PAR1MAGIC &left, const PAR1MAGIC &right) {
   return !operator==(left, right);
 }
 

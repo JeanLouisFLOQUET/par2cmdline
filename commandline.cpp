@@ -29,18 +29,15 @@ static char THIS_FILE[]=__FILE__;
 
 CommandLine::ExtraFile::ExtraFile(void)
 : filename()
-, filesize(0)
-{
+, filesize(0) {
 }
 
 CommandLine::ExtraFile::ExtraFile(const CommandLine::ExtraFile &other)
 : filename(other.filename)
-, filesize(other.filesize)
-{
+, filesize(other.filesize) {
 }
 
-CommandLine::ExtraFile& CommandLine::ExtraFile::operator=(const CommandLine::ExtraFile &other)
-{
+CommandLine::ExtraFile& CommandLine::ExtraFile::operator=(const CommandLine::ExtraFile &other) {
 	filename = other.filename;
 	filesize = other.filesize;
 
@@ -49,8 +46,7 @@ CommandLine::ExtraFile& CommandLine::ExtraFile::operator=(const CommandLine::Ext
 
 CommandLine::ExtraFile::ExtraFile(const string &name, u64 size)
 : filename(name)
-, filesize(size)
-{
+, filesize(size) {
 }
 
 
@@ -71,24 +67,23 @@ CommandLine::CommandLine(void)
 , extrafiles()
 , totalsourcesize(0)
 , largestsourcesize(0)
-, memorylimit(0)
-{
+, memorylimit(0) {
 }
 
 void CommandLine::usage(void) {
 	cout <<
-		                                                                                      "\n"
+																																													"\n"
 		"Usage:"                                                                              "\n"
-		                                                                                      "\n"
+																																													"\n"
 		"  par2 c(reate) [options] <par2 file> [files] : Create PAR2 files"                   "\n"
 		"  par2 v(erify) [options] <par2 file> [files] : Verify files using PAR2 file"        "\n"
 		"  par2 r(epair) [options] <par2 file> [files] : Repair files using PAR2 files"       "\n"
-		                                                                                      "\n"
+																																													"\n"
 		"You may also leave out the \"c\", \"v\", and \"r\" commands by using \"parcreate\"," "\n"
 		"\"par2verify\", or \"par2repair\" instead."                                          "\n"
-		                                                                                      "\n"
+																																													"\n"
 		"Options:"                                                                            "\n"
-		                                                                                      "\n"
+																																													"\n"
 		"  Block property (choose only one) :"                                                "\n"
 		"     -b<n>  : Set the Block-Count"                                                   "\n"
 		"     -s<n>  : Set the Block-Size "                                                   "\n"
@@ -107,7 +102,7 @@ void CommandLine::usage(void) {
 		"     -v [-v]: Be more verbose"                                                       "\n"
 		"     -q [-q]: Be more quiet (-q -q gives silence)"                                   "\n"
 		"     --     : Treat all remaining CommandLine as filenames"                          "\n"
-		                                                                                      "\n"
+																																													"\n"
 		"If you wish to create par2 files for a single source file, you may leave"            "\n"
 		"out the name of the par2 file from the command line."                                "\n";
 }
@@ -165,10 +160,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 				// Set the block count
 				//==============================================================================================================================
 				case 'b': {
-						if (operation != opCreate) {
-							cerr << "Cannot specify block count unless creating." << endl;
-							return false;
-						}
+						if (operation != opCreate) { cerr << "Cannot specify block count unless creating." << endl; return false; }
 
 						     if (blockcount > 0) { cerr << "Cannot specify block count twice."               << endl; return false; }
 						else if (blocksize  > 0) { cerr << "Cannot specify both block count and block size." << endl; return false; }
@@ -179,10 +171,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 							blockcount = blockcount * 10 + (*p - '0');
 							p++;
 						}
-						if (0 == blockcount || blockcount > 32768 || *p) {
-							cerr << "Invalid block count option: " << argv[0] << endl;
-							return false;
-						}
+						if (0 == blockcount || blockcount > 32768 || *p) { cerr << "Invalid block count option: " << argv[0] << endl; return false; }
 					}
 					break;
 
@@ -348,7 +337,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 				case 'q': {
 						switch (noiselevel) {
 						case nlUnknown: {
-								if (argv[0][2] == 'q') { noiselevel = nlSilent; } 
+								if (argv[0][2] == 'q') { noiselevel = nlSilent; }
 								else                   { noiselevel = nlQuiet ; }
 							}
 							break;
@@ -364,8 +353,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
-				case '-':
-					{ argc--; argv++; options = false; continue; }
+				case '-': { argc--; argv++; options = false; continue; }
 					break;
 
 				default: {
@@ -421,7 +409,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 							// files filename was actually the name of a data file.
 							if (version == verUnknown) {
 								// Check for the existence of a PAR2 of PAR file.
-								     if (DiskFile::FileExists(filename + ".par2")) { version = verPar2; parfilename = filename + ".par2"; }
+										 if (DiskFile::FileExists(filename + ".par2")) { version = verPar2; parfilename = filename + ".par2"; }
 								else if (DiskFile::FileExists(filename + ".PAR2")) { version = verPar2; parfilename = filename + ".PAR2"; }
 								else if (DiskFile::FileExists(filename + ".par" )) { version = verPar1; parfilename = filename + ".par" ; }
 								else if (DiskFile::FileExists(filename + ".PAR" )) { version = verPar1; parfilename = filename + ".PAR" ; }
@@ -488,8 +476,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 		}
 
 		// If we are creating, the source files must be given.
-		if (extrafiles.size() == 0)
-		{
+		if (extrafiles.size() == 0) {
 			// Does the par filename include the ".par2" on the end?
 			if (parfilename.length() > 5 && 0 == stricmp(parfilename.substr(parfilename.length()-5, 5).c_str(), ".par2")) {
 				// Yes it does.

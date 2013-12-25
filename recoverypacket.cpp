@@ -27,72 +27,67 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-RecoveryPacket::RecoveryPacket(void)
-{
-  diskfile = NULL;
-  offset = 0;
-  packetcontext = NULL;
+RecoveryPacket::RecoveryPacket(void) {
+	diskfile = NULL;
+	offset = 0;
+	packetcontext = NULL;
 }
 
-RecoveryPacket::~RecoveryPacket(void)
-{
-  delete packetcontext;
+RecoveryPacket::~RecoveryPacket(void) {
+	delete packetcontext;
 }
 
-// Create a recovery packet. 
+// Create a recovery packet.
 
 // The packet header can be almost completely filled in using the supplied
 // information and computation of the hash of the packet started immediately.
 // The hash will be updated as new data is written to the packet.
 
-void RecoveryPacket::Create(DiskFile      *_diskfile, 
-                            u64            _offset, 
-                            u64            _blocksize, 
-                            u32            _exponent, 
-                            const MD5Hash &_setid)
-{
-  diskfile = _diskfile;
-  offset = _offset;
+void RecoveryPacket::Create(DiskFile      *_diskfile,
+														u64            _offset,
+														u64            _blocksize,
+														u32            _exponent,
+														const MD5Hash &_setid) {
+	diskfile = _diskfile;
+	offset = _offset;
 
-  // Record everything we know in the packet.
-  packet.header.magic  = packet_magic;
-  packet.header.length = sizeof(packet) + _blocksize;
-  //packet.header.hash;  // Not known yet.
-  packet.header.setid  = _setid;
-  packet.header.type   = recoveryblockpacket_type;
-  packet.exponent      = _exponent;
+	// Record everything we know in the packet.
+	packet.header.magic  = packet_magic;
+	packet.header.length = sizeof(packet) + _blocksize;
+	//packet.header.hash;  // Not known yet.
+	packet.header.setid  = _setid;
+	packet.header.type   = recoveryblockpacket_type;
+	packet.exponent      = _exponent;
 
-  // Start computation of the packet hash
-  packetcontext = new MD5Context;
-  packetcontext->Update(&packet.header.setid, 
-                        sizeof(RECOVERYBLOCKPACKET)-offsetof(RECOVERYBLOCKPACKET, header.setid));
+	// Start computation of the packet hash
+	packetcontext = new MD5Context;
+	packetcontext->Update(&packet.header.setid,
+												sizeof(RECOVERYBLOCKPACKET)-offsetof(RECOVERYBLOCKPACKET, header.setid));
 
-  // Set the data block to immediatly follow the header on disk
-  datablock.SetLocation(_diskfile, _offset + sizeof(packet));
-  datablock.SetLength(_blocksize);
+	// Set the data block to immediatly follow the header on disk
+	datablock.SetLocation(_diskfile, _offset + sizeof(packet));
+	datablock.SetLength(_blocksize);
 }
 
 // Write data from the buffer to the data block on disk
-bool RecoveryPacket::WriteData(u64 position, 
-                               size_t size, 
-                               const void *buffer)
-{
-  // Update the packet hash
-  packetcontext->Update(buffer, size);
+bool RecoveryPacket::WriteData(u64 position,
+															 size_t size,
+															 const void *buffer) {
+	// Update the packet hash
+	packetcontext->Update(buffer, size);
 
-  // Write the data to the data block
-  size_t wrote;
-  return datablock.WriteData(position, size, buffer, wrote);
+	// Write the data to the data block
+	size_t wrote;
+	return datablock.WriteData(position, size, buffer, wrote);
 }
 
 // Write the header of the packet to disk
-bool RecoveryPacket::WriteHeader(void)
-{
-  // Finish computing the packet hash
-  packetcontext->Final(packet.header.hash);
+bool RecoveryPacket::WriteHeader(void) {
+	// Finish computing the packet hash
+	packetcontext->Final(packet.header.hash);
 
-  // Write the header to disk
-  return diskfile->Write(offset, &packet, sizeof(packet));  
+	// Write the header to disk
+	return diskfile->Write(offset, &packet, sizeof(packet));
 }
 
 // Load the recovery packet from disk.
@@ -102,26 +97,24 @@ bool RecoveryPacket::WriteHeader(void)
 // The recovery data is not read from disk at this point. Its location
 // is recovered in the DataBlock object.
 
-bool RecoveryPacket::Load(DiskFile      *_diskfile, 
-                          u64            _offset, 
-                          PACKET_HEADER &_header)
-{
-  diskfile = _diskfile;
-  offset = _offset;
+bool RecoveryPacket::Load(DiskFile      *_diskfile,
+													u64            _offset,
+													PACKET_HEADER &_header) {
+	diskfile = _diskfile;
+	offset = _offset;
 
-  // Is the packet actually large enough
-  if (_header.length <= sizeof(packet))
-  {
-    return false;
-  }
+	// Is the packet actually large enough
+	if (_header.length <= sizeof(packet)) {
+		return false;
+	}
 
-  // Save the fixed header
-  packet.header = _header;
+	// Save the fixed header
+	packet.header = _header;
 
-  // Set the data block to immediatly follow the header on disk
-  datablock.SetLocation(diskfile, offset + sizeof(packet));
-  datablock.SetLength(packet.header.length - sizeof(packet));
+	// Set the data block to immediatly follow the header on disk
+	datablock.SetLocation(diskfile, offset + sizeof(packet));
+	datablock.SetLength(packet.header.length - sizeof(packet));
 
-  // Read the rest of the packet header
-  return diskfile->Read(offset + sizeof(packet.header), &packet.exponent, sizeof(packet)-sizeof(packet.header));
+	// Read the rest of the packet header
+	return diskfile->Read(offset + sizeof(packet.header), &packet.exponent, sizeof(packet)-sizeof(packet.header));
 }

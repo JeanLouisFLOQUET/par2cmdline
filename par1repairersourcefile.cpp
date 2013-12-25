@@ -27,91 +27,77 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-Par1RepairerSourceFile::Par1RepairerSourceFile(PAR1FILEENTRY *fileentry, string searchpath)
-{
-  targetexists = false;
-  targetfile = 0;
-  completefile = 0;
+Par1RepairerSourceFile::Par1RepairerSourceFile(PAR1FILEENTRY *fileentry, string searchpath) {
+	targetexists = false;
+	targetfile = 0;
+	completefile = 0;
 
-  hashfull = fileentry->hashfull;
-  hash16k = fileentry->hash16k;
-  filesize = fileentry->filesize;
+	hashfull = fileentry->hashfull;
+	hash16k = fileentry->hash16k;
+	filesize = fileentry->filesize;
 
-  u32 namelen = (u32)((fileentry->entrysize - offsetof(PAR1FILEENTRY, name)) / 2);
+	u32 namelen = (u32)((fileentry->entrysize - offsetof(PAR1FILEENTRY, name)) / 2);
 
-  for (u32 index=0; index<namelen; index++)
-  {
-    // We can't deal with Unicode characters!
-    u16 ch = fileentry->name[index];
-    if (ch >= 256)
-    {
-      // Convert the Unicode character to two characters
-      filename += ch && 255;
-      filename += ch >> 8;
-    }
-    else
-    {
-      filename += ch & 255;
-    }
-  }
+	for (u32 index=0; index<namelen; index++) {
+		// We can't deal with Unicode characters!
+		u16 ch = fileentry->name[index];
+		if (ch >= 256) {
+			// Convert the Unicode character to two characters
+			filename += ch && 255;
+			filename += ch >> 8;
+		} else {
+			filename += ch & 255;
+		}
+	}
 
-  // Translate any characters the OS does not like;
-  filename = DiskFile::TranslateFilename(filename);
+	// Translate any characters the OS does not like;
+	filename = DiskFile::TranslateFilename(filename);
 
-  // Strip the path from the filename
-  string::size_type where;
-  if (string::npos != (where = filename.find_last_of('\\'))
-      || string::npos != (where = filename.find_last_of('/'))
+	// Strip the path from the filename
+	string::size_type where;
+	if (string::npos != (where = filename.find_last_of('\\'))
+			|| string::npos != (where = filename.find_last_of('/'))
 #ifdef WIN32
-      || string::npos != (where = filename.find_last_of(':'))
+			|| string::npos != (where = filename.find_last_of(':'))
 #endif
-     )
-  {
-    filename = filename.substr(where+1);
-  }
+		 ) {
+		filename = filename.substr(where+1);
+	}
 
-  filename = searchpath + filename;
+	filename = searchpath + filename;
 }
 
-Par1RepairerSourceFile::~Par1RepairerSourceFile(void)
-{
+Par1RepairerSourceFile::~Par1RepairerSourceFile(void) {
 }
 
-void Par1RepairerSourceFile::SetTargetFile(DiskFile *diskfile)
-{
-  targetfile = diskfile;
+void Par1RepairerSourceFile::SetTargetFile(DiskFile *diskfile) {
+	targetfile = diskfile;
 }
 
-DiskFile* Par1RepairerSourceFile::GetTargetFile(void) const
-{
-  return targetfile;
+DiskFile* Par1RepairerSourceFile::GetTargetFile(void) const {
+	return targetfile;
 }
 
-void Par1RepairerSourceFile::SetTargetExists(bool exists)
-{
-  targetexists = exists;
+void Par1RepairerSourceFile::SetTargetExists(bool exists) {
+	targetexists = exists;
 }
 
-bool Par1RepairerSourceFile::GetTargetExists(void) const
-{
-  return targetexists;
+bool Par1RepairerSourceFile::GetTargetExists(void) const {
+	return targetexists;
 }
 
-void Par1RepairerSourceFile::SetCompleteFile(DiskFile *diskfile)
-{
-  completefile = diskfile;
+void Par1RepairerSourceFile::SetCompleteFile(DiskFile *diskfile) {
+	completefile = diskfile;
 
-  sourceblock.SetLocation(diskfile, 0);
-  sourceblock.SetLength(diskfile ? diskfile->FileSize() : 0);
+	sourceblock.SetLocation(diskfile, 0);
+	sourceblock.SetLength(diskfile ? diskfile->FileSize() : 0);
 }
 
-DiskFile* Par1RepairerSourceFile::GetCompleteFile(void) const
-{
-  return completefile;
+DiskFile* Par1RepairerSourceFile::GetCompleteFile(void) const {
+	return completefile;
 }
 
-void Par1RepairerSourceFile::SetTargetBlock(DiskFile *diskfile)
-{
-  targetblock.SetLocation(diskfile, 0);
-  targetblock.SetLength(diskfile->FileSize());
+void Par1RepairerSourceFile::SetTargetBlock(DiskFile *diskfile) {
+	targetblock.SetLocation(diskfile, 0);
+	targetblock.SetLength(diskfile->FileSize());
 }

@@ -31,48 +31,40 @@ static char THIS_FILE[]=__FILE__;
 crc32table ccitttable(0xEDB88320L);
 
 // Construct the CRC32 lookup table from the specified polynomial
-void GenerateCRC32Table(u32 polynomial, u32 (&table)[256])
-{
-  for (u32 i = 0; i <= 255 ; i++) 
-  {
-    u32 crc = i;
+void GenerateCRC32Table(u32 polynomial, u32 (&table)[256]) {
+	for (u32 i = 0; i <= 255 ; i++) {
+		u32 crc = i;
 
-    for (u32 j = 0; j < 8; j++) 
-    {
-      crc = (crc >> 1) ^ ((crc & 1) ? polynomial : 0);
-    }
+		for (u32 j = 0; j < 8; j++) {
+			crc = (crc >> 1) ^ ((crc & 1) ? polynomial : 0);
+		}
 
-    table[i] = crc;
-  }
+		table[i] = crc;
+	}
 }
 
 // Construct a CRC32 lookup table for windowing
-void GenerateWindowTable(u64 window, u32 (&target)[256])
-{
-  for (u32 i=0; i<=255; i++)
-  {
-    u32 crc = ccitttable.table[i];
+void GenerateWindowTable(u64 window, u32 (&target)[256]) {
+	for (u32 i=0; i<=255; i++) {
+		u32 crc = ccitttable.table[i];
 
-    for (u64 j=0; j<window; j++)
-    {
-      crc = ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc];
-    }
+		for (u64 j=0; j<window; j++) {
+			crc = ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc];
+		}
 
-    target[i] = crc;
-  }
+		target[i] = crc;
+	}
 }
 
 // Construct the mask value to apply to the CRC when windowing
-u32 ComputeWindowMask(u64 window)
-{
-  u32 result = ~0;
-  while (window > 0)
-  {
-    result = CRCUpdateChar(result, (char)0);
+u32 ComputeWindowMask(u64 window) {
+	u32 result = ~0;
+	while (window > 0) {
+		result = CRCUpdateChar(result, (char)0);
 
-    window--;
-  }
-  result ^= ~0;
+		window--;
+	}
+	result ^= ~0;
 
-  return result;
+	return result;
 }

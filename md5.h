@@ -35,8 +35,7 @@
 
 // MD5 Hash value
 
-class MD5Hash
-{
+class MD5Hash {
 public:
   // Constructor does not initialise the value
   MD5Hash(void) {};
@@ -64,8 +63,7 @@ public:
 
 // Intermediate computation state
 
-class MD5State
-{
+class MD5State {
 public:
   MD5State(void);
   void Reset(void);
@@ -79,8 +77,7 @@ protected:
 
 // MD5 computation context with 64 byte buffer
 
-class MD5Context : public MD5State
-{
+class MD5Context : public MD5State {
 public:
   MD5Context(void);
   ~MD5Context(void) {};
@@ -112,45 +109,36 @@ protected:
 
 // Compare hash values
 
-inline bool MD5Hash::operator==(const MD5Hash &other) const
-{
+inline bool MD5Hash::operator==(const MD5Hash &other) const {
   return (0==memcmp(&hash, &other.hash, sizeof(hash)));
 }
-inline bool MD5Hash::operator!=(const MD5Hash &other) const
-{
+inline bool MD5Hash::operator!=(const MD5Hash &other) const {
   return !operator==(other);
 }
 
-inline bool MD5Hash::operator<(const MD5Hash &other) const
-{
+inline bool MD5Hash::operator<(const MD5Hash &other) const {
   size_t index = 15;
-  while (index > 0 && hash[index] == other.hash[index])
-  {
+  while (index > 0 && hash[index] == other.hash[index]) {
     index--;
   }
 
   return hash[index] < other.hash[index];
 }
-inline bool MD5Hash::operator>=(const MD5Hash &other) const 
-{
+inline bool MD5Hash::operator>=(const MD5Hash &other) const {
   return !operator<(other);
 }
-inline bool MD5Hash::operator>(const MD5Hash &other) const 
-{
+inline bool MD5Hash::operator>(const MD5Hash &other) const {
   return other.operator<(*this);
 }
-inline bool MD5Hash::operator<=(const MD5Hash &other) const 
-{
+inline bool MD5Hash::operator<=(const MD5Hash &other) const {
   return !other.operator<(*this);
 }
 
-inline MD5Hash::MD5Hash(const MD5Hash &other)
-{
+inline MD5Hash::MD5Hash(const MD5Hash &other) {
   memcpy(&hash, &other.hash, sizeof(hash));
 }
 
-inline MD5Hash& MD5Hash::operator=(const MD5Hash &other)
-{
+inline MD5Hash& MD5Hash::operator=(const MD5Hash &other) {
   memcpy(&hash, &other.hash, sizeof(hash));
 
   return *this;

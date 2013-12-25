@@ -25,8 +25,7 @@
 
 // These packets are all small and are held in memory in their entirity
 
-class CriticalPacket
-{
+class CriticalPacket {
 public:
   CriticalPacket(void);
   ~CriticalPacket(void);
@@ -49,26 +48,22 @@ protected:
   size_t  packetlength;
 };
 
-inline CriticalPacket::CriticalPacket(void)
-{
+inline CriticalPacket::CriticalPacket(void) {
   // There is no data initially
   packetdata = 0;
   packetlength = 0;
 }
 
-inline CriticalPacket::~CriticalPacket(void)
-{
+inline CriticalPacket::~CriticalPacket(void) {
   // Delete the data for the packet
   delete [] packetdata;
 }
 
-inline size_t CriticalPacket::PacketLength(void) const
-{
+inline size_t CriticalPacket::PacketLength(void) const {
   return packetlength;
 }
 
-inline void* CriticalPacket::AllocatePacket(size_t length, size_t extra)
-{
+inline void* CriticalPacket::AllocatePacket(size_t length, size_t extra) {
   // Hey! We can't allocate the packet twice
   assert(packetlength == 0 && packetdata == 0);
 
@@ -85,28 +80,23 @@ inline void* CriticalPacket::AllocatePacket(size_t length, size_t extra)
 // Class used to record the fact that a copy of a particular critical packet
 // will be written to a particular file at a specific offset.
 
-class CriticalPacketEntry
-{
+class CriticalPacketEntry {
 public:
-  CriticalPacketEntry(DiskFile *_diskfile, 
-                      u64 _offset, 
+  CriticalPacketEntry(DiskFile *_diskfile,
+                      u64 _offset,
                       const CriticalPacket *_packet)
     : diskfile(_diskfile)
     , offset(_offset)
-    , packet(_packet)
-  {}
+    , packet(_packet) {}
   CriticalPacketEntry(void)
     : diskfile(0)
     , offset(0)
-    , packet(0)
-  {}
+    , packet(0) {}
   CriticalPacketEntry(const CriticalPacketEntry &other)
     : diskfile(other.diskfile)
     , offset(other.offset)
-    , packet(other.packet)
-  {}
-  CriticalPacketEntry& operator=(const CriticalPacketEntry &other)
-  {
+    , packet(other.packet) {}
+  CriticalPacketEntry& operator=(const CriticalPacketEntry &other) {
     diskfile = other.diskfile;
     offset = other.offset;
     packet = other.packet;
@@ -126,16 +116,14 @@ protected:
   const CriticalPacket *packet;
 };
 
-inline bool CriticalPacketEntry::WritePacket(void) const
-{
+inline bool CriticalPacketEntry::WritePacket(void) const {
   assert(packet != 0 && diskfile != 0);
 
   // Tell the packet to write itself to disk
   return packet->WritePacket(*diskfile, offset);
 }
 
-inline u64 CriticalPacketEntry::PacketLength(void) const
-{
+inline u64 CriticalPacketEntry::PacketLength(void) const {
   assert(packet != 0);
 
   // Ask the packet how big it is.

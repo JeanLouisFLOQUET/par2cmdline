@@ -29,85 +29,77 @@ static char THIS_FILE[]=__FILE__;
 
 // Construct the packet and store the filename and size.
 
-bool DescriptionPacket::Create(string filename, u64 filesize)
-{
-  // Allocate some extra bytes for the packet in memory so that strlen() can
-  // be used on the filename. The extra bytes do not get written to disk.
-  FILEDESCRIPTIONPACKET *packet = (FILEDESCRIPTIONPACKET *)AllocatePacket(sizeof(*packet) + (~3 & (3 + (u32)filename.size())), 4);
+bool DescriptionPacket::Create(string filename, u64 filesize) {
+	// Allocate some extra bytes for the packet in memory so that strlen() can
+	// be used on the filename. The extra bytes do not get written to disk.
+	FILEDESCRIPTIONPACKET *packet = (FILEDESCRIPTIONPACKET *)AllocatePacket(sizeof(*packet) + (~3 & (3 + (u32)filename.size())), 4);
 
-  // Store everything that is currently known in the packet.
+	// Store everything that is currently known in the packet.
 
-  packet->header.magic  = packet_magic;
-  packet->header.length = packetlength;
-  //packet->header.hash;  // Not known yet
-  //packet->header.setid; // Not known yet
-  packet->header.type   = filedescriptionpacket_type;
+	packet->header.magic  = packet_magic;
+	packet->header.length = packetlength;
+	//packet->header.hash;  // Not known yet
+	//packet->header.setid; // Not known yet
+	packet->header.type   = filedescriptionpacket_type;
 
-  //packet->fileid;       // Not known yet
-  //packet->hashfull;     // Not known yet
-  //packet->hash16k;      // Not known yet
-  packet->length        = filesize;
+	//packet->fileid;       // Not known yet
+	//packet->hashfull;     // Not known yet
+	//packet->hash16k;      // Not known yet
+	packet->length        = filesize;
 
-  memcpy(packet->name, filename.c_str(), filename.size());
+	memcpy(packet->name, filename.c_str(), filename.size());
 
-  return true;
+	return true;
 }
 
 
-void DescriptionPacket::Hash16k(const MD5Hash &hash)
-{
-  ((FILEDESCRIPTIONPACKET *)packetdata)->hash16k = hash;
+void DescriptionPacket::Hash16k(const MD5Hash &hash) {
+	((FILEDESCRIPTIONPACKET *)packetdata)->hash16k = hash;
 }
 
-void DescriptionPacket::HashFull(const MD5Hash &hash)
-{
-  ((FILEDESCRIPTIONPACKET *)packetdata)->hashfull = hash;
+void DescriptionPacket::HashFull(const MD5Hash &hash) {
+	((FILEDESCRIPTIONPACKET *)packetdata)->hashfull = hash;
 }
 
-void DescriptionPacket::ComputeFileId(void)
-{
-  FILEDESCRIPTIONPACKET *packet = ((FILEDESCRIPTIONPACKET *)packetdata);
+void DescriptionPacket::ComputeFileId(void) {
+	FILEDESCRIPTIONPACKET *packet = ((FILEDESCRIPTIONPACKET *)packetdata);
 
-  // Compute the fileid from the hash, length, and name fields in the packet.
+	// Compute the fileid from the hash, length, and name fields in the packet.
 
-  MD5Context context;
-  context.Update(&packet->hash16k, 
-                 sizeof(FILEDESCRIPTIONPACKET)-offsetof(FILEDESCRIPTIONPACKET,hash16k)
-                 +strlen((const char*)packet->name));
-  context.Final(packet->fileid);
+	MD5Context context;
+	context.Update(&packet->hash16k,
+								 sizeof(FILEDESCRIPTIONPACKET)-offsetof(FILEDESCRIPTIONPACKET,hash16k)
+								 +strlen((const char*)packet->name));
+	context.Final(packet->fileid);
 }
 
 // Load a description packet from a specified file
-bool DescriptionPacket::Load(DiskFile *diskfile, u64 offset, PACKET_HEADER &header)
-{
-  // Is the packet big enough
-  if (header.length <= sizeof(FILEDESCRIPTIONPACKET))
-  {
-    return false;
-  }
+bool DescriptionPacket::Load(DiskFile *diskfile, u64 offset, PACKET_HEADER &header) {
+	// Is the packet big enough
+	if (header.length <= sizeof(FILEDESCRIPTIONPACKET)) {
+		return false;
+	}
 
-  // Is the packet too large (what is the longest permissible filename)
-  if (header.length - sizeof(FILEDESCRIPTIONPACKET) > 100000)
-  {
-    return false;
-  }
+	// Is the packet too large (what is the longest permissible filename)
+	if (header.length - sizeof(FILEDESCRIPTIONPACKET) > 100000) {
+		return false;
+	}
 
-  // Allocate the packet (with a little extra so we will have NULLs after the filename)
-  FILEDESCRIPTIONPACKET *packet = (FILEDESCRIPTIONPACKET *)AllocatePacket((size_t)header.length, 4);
+	// Allocate the packet (with a little extra so we will have NULLs after the filename)
+	FILEDESCRIPTIONPACKET *packet = (FILEDESCRIPTIONPACKET *)AllocatePacket((size_t)header.length, 4);
 
-  packet->header = header;
+	packet->header = header;
 
-  // Read the rest of the packet from disk
-  if (!diskfile->Read(offset + sizeof(PACKET_HEADER), 
-                      &packet->fileid, 
-                      (size_t)packet->header.length - sizeof(PACKET_HEADER)))
-    return false;
+	// Read the rest of the packet from disk
+	if (!diskfile->Read(offset + sizeof(PACKET_HEADER),
+											&packet->fileid,
+											(size_t)packet->header.length - sizeof(PACKET_HEADER)))
+		return false;
 
-  // Are the file and 16k hashes consistent
-  if (packet->length <= 16384 && packet->hash16k != packet->hashfull)
-  {
-    return false;
-  }
+	// Are the file and 16k hashes consistent
+	if (packet->length <= 16384 && packet->hash16k != packet->hashfull) {
+		return false;
+	}
 
-  return true;
+	return true;
 }

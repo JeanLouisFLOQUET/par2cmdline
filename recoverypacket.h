@@ -29,8 +29,7 @@
 // exponent value for the block and uses a DataBlock object for
 // all accesses to the actual recovery data in the packet.
 
-class RecoveryPacket
-{
+class RecoveryPacket {
 public:
   RecoveryPacket(void);
   ~RecoveryPacket(void);
@@ -77,23 +76,19 @@ protected:
   DataBlock           datablock;      // The recovery data block.
 };
 
-inline u64 RecoveryPacket::PacketLength(void) const
-{
+inline u64 RecoveryPacket::PacketLength(void) const {
   return packet.header.length;
 }
 
-inline u32 RecoveryPacket::Exponent(void) const
-{
+inline u32 RecoveryPacket::Exponent(void) const {
   return packet.exponent;
 }
 
-inline u64 RecoveryPacket::BlockSize(void) const
-{
+inline u64 RecoveryPacket::BlockSize(void) const {
   return packet.header.length - sizeof(packet);
 }
 
-inline DataBlock* RecoveryPacket::GetDataBlock(void)
-{
+inline DataBlock* RecoveryPacket::GetDataBlock(void) {
   return &datablock;
 }
 

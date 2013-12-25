@@ -27,316 +27,286 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-Par2CreatorSourceFile::Par2CreatorSourceFile(void)
-{
-  descriptionpacket = 0;
-  verificationpacket = 0;
-  diskfile = 0;
-  blockcount = 0;
-  //diskfilename;
-  //parfilename;
-  contextfull = 0;
+Par2CreatorSourceFile::Par2CreatorSourceFile(void) {
+	descriptionpacket = 0;
+	verificationpacket = 0;
+	diskfile = 0;
+	blockcount = 0;
+	//diskfilename;
+	//parfilename;
+	contextfull = 0;
 }
 
-Par2CreatorSourceFile::~Par2CreatorSourceFile(void)
-{
-  delete descriptionpacket;
-  delete verificationpacket;
-  delete diskfile;
-  delete contextfull;
+Par2CreatorSourceFile::~Par2CreatorSourceFile(void) {
+	delete descriptionpacket;
+	delete verificationpacket;
+	delete diskfile;
+	delete contextfull;
 }
 
 // Open the source file, compute the MD5 Hash of the whole file and the first
 // 16k of the file, and then compute the FileId and store the results
 // in a file description packet and a file verification packet.
 
-bool Par2CreatorSourceFile::Open(CommandLine::NoiseLevel noiselevel, const CommandLine::ExtraFile &extrafile, u64 blocksize, bool deferhashcomputation)
-{
-  // Get the filename and filesize
-  diskfilename = extrafile.FileName();
-  filesize = extrafile.FileSize();
+bool Par2CreatorSourceFile::Open(CommandLine::NoiseLevel noiselevel, const CommandLine::ExtraFile &extrafile, u64 blocksize, bool deferhashcomputation) {
+	// Get the filename and filesize
+	diskfilename = extrafile.FileName();
+	filesize = extrafile.FileSize();
 
-  // Work out how many blocks the file will be sliced into
-  blockcount = (u32)((filesize + blocksize-1) / blocksize);
-  
-  // Determine what filename to record in the PAR2 files
-  string::size_type where;
-  if (string::npos != (where = diskfilename.find_last_of('\\')) ||
-      string::npos != (where = diskfilename.find_last_of('/')))
-  {
-    parfilename = diskfilename.substr(where+1);
-  }
-  else
-  {
-    parfilename = diskfilename;
-  }
+	// Work out how many blocks the file will be sliced into
+	blockcount = (u32)((filesize + blocksize-1) / blocksize);
 
-  // Create the Description and Verification packets
-  descriptionpacket = new DescriptionPacket;
-  descriptionpacket->Create(parfilename, filesize);
+	// Determine what filename to record in the PAR2 files
+	string::size_type where;
+	if (string::npos != (where = diskfilename.find_last_of('\\')) ||
+			string::npos != (where = diskfilename.find_last_of('/'))) {
+		parfilename = diskfilename.substr(where+1);
+	} else {
+		parfilename = diskfilename;
+	}
 
-  verificationpacket = new VerificationPacket;
-  verificationpacket->Create(blockcount);
+	// Create the Description and Verification packets
+	descriptionpacket = new DescriptionPacket;
+	descriptionpacket->Create(parfilename, filesize);
 
-  // Create the diskfile object
-  diskfile  = new DiskFile;
+	verificationpacket = new VerificationPacket;
+	verificationpacket->Create(blockcount);
 
-  // Open the source file
-  if (!diskfile->Open(diskfilename, filesize))
-    return false;
+	// Create the diskfile object
+	diskfile  = new DiskFile;
 
-  // Do we want to defer the computation of the full file hash, and 
-  // the block crc and hashes. This is only permitted if there
-  // is sufficient memory available to create all recovery blocks
-  // in one pass of the source files (i.e. chunksize == blocksize)
-  if (deferhashcomputation)
-  {
-    // Initialise a buffer to read the first 16k of the source file
-    size_t buffersize = 16 * 1024;
-    if (buffersize > filesize)
-      buffersize = (size_t)filesize;
-    char *buffer = new char[buffersize];
+	// Open the source file
+	if (!diskfile->Open(diskfilename, filesize))
+		return false;
 
-    // Read the data from the file
-    if (!diskfile->Read(0, buffer, buffersize))
-    {
-      diskfile->Close();
-      delete [] buffer;
-      return false;
-    }
+	// Do we want to defer the computation of the full file hash, and
+	// the block crc and hashes. This is only permitted if there
+	// is sufficient memory available to create all recovery blocks
+	// in one pass of the source files (i.e. chunksize == blocksize)
+	if (deferhashcomputation) {
+		// Initialise a buffer to read the first 16k of the source file
+		size_t buffersize = 16 * 1024;
+		if (buffersize > filesize)
+			buffersize = (size_t)filesize;
+		char *buffer = new char[buffersize];
 
-    // Compute the hash of the data read from the file
-    MD5Context context;
-    context.Update(buffer, buffersize);
-    delete [] buffer;
-    MD5Hash hash;
-    context.Final(hash);
+		// Read the data from the file
+		if (!diskfile->Read(0, buffer, buffersize)) {
+			diskfile->Close();
+			delete [] buffer;
+			return false;
+		}
 
-    // Store the hash in the descriptionpacket and compute the file id
-    descriptionpacket->Hash16k(hash);
+		// Compute the hash of the data read from the file
+		MD5Context context;
+		context.Update(buffer, buffersize);
+		delete [] buffer;
+		MD5Hash hash;
+		context.Final(hash);
 
-    // Compute the fileid and store it in the verification packet.
-    descriptionpacket->ComputeFileId();
-    verificationpacket->FileId(descriptionpacket->FileId());
+		// Store the hash in the descriptionpacket and compute the file id
+		descriptionpacket->Hash16k(hash);
 
-    // Allocate an MD5 context for computing the file hash
-    // during the recovery data generation phase
-    contextfull = new MD5Context;
-  }
-  else
-  {
-    // Initialise a buffer to read the source file
-    size_t buffersize = 1024*1024;
-    if (buffersize > min(blocksize,filesize))
-      buffersize = (size_t)min(blocksize,filesize);
-    char *buffer = new char[buffersize];
+		// Compute the fileid and store it in the verification packet.
+		descriptionpacket->ComputeFileId();
+		verificationpacket->FileId(descriptionpacket->FileId());
 
-    // Get ready to start reading source file to compute the hashes and crcs
-    u64 offset = 0;
-    u32 blocknumber = 0;
-    u64 need = blocksize;
+		// Allocate an MD5 context for computing the file hash
+		// during the recovery data generation phase
+		contextfull = new MD5Context;
+	} else {
+		// Initialise a buffer to read the source file
+		size_t buffersize = 1024*1024;
+		if (buffersize > min(blocksize,filesize))
+			buffersize = (size_t)min(blocksize,filesize);
+		char *buffer = new char[buffersize];
 
-    MD5Context filecontext;
-    MD5Context blockcontext;
-    u32        blockcrc = 0;
+		// Get ready to start reading source file to compute the hashes and crcs
+		u64 offset = 0;
+		u32 blocknumber = 0;
+		u64 need = blocksize;
 
-    // Whilst we have not reached the end of the file
-    while (offset < filesize)
-    {
-      // Work out how much we can read
-      size_t want = (size_t)min(filesize-offset, (u64)buffersize);
+		MD5Context filecontext;
+		MD5Context blockcontext;
+		u32        blockcrc = 0;
 
-      // Read some data from the file into the buffer
-      if (!diskfile->Read(offset, buffer, want))
-      {
-        diskfile->Close();
-        delete [] buffer;
-        return false;
-      }
+		// Whilst we have not reached the end of the file
+		while (offset < filesize) {
+			// Work out how much we can read
+			size_t want = (size_t)min(filesize-offset, (u64)buffersize);
 
-      // If the new data passes the 16k boundary, compute the 16k hash for the file
-      if (offset < 16384 && offset + want >= 16384)
-      {
-        filecontext.Update(buffer, (size_t)(16384-offset));
+			// Read some data from the file into the buffer
+			if (!diskfile->Read(offset, buffer, want)) {
+				diskfile->Close();
+				delete [] buffer;
+				return false;
+			}
 
-        MD5Context temp = filecontext;
-        MD5Hash hash;
-        temp.Final(hash);
+			// If the new data passes the 16k boundary, compute the 16k hash for the file
+			if (offset < 16384 && offset + want >= 16384) {
+				filecontext.Update(buffer, (size_t)(16384-offset));
 
-        // Store the 16k hash in the file description packet
-        descriptionpacket->Hash16k(hash);
+				MD5Context temp = filecontext;
+				MD5Hash hash;
+				temp.Final(hash);
 
-        if (offset + want > 16384)
-        {
-          filecontext.Update(&buffer[16384-offset], (size_t)(offset+want)-16384);
-        }
-      }
-      else
-      {
-        filecontext.Update(buffer, want);
-      }
+				// Store the 16k hash in the file description packet
+				descriptionpacket->Hash16k(hash);
 
-      // Get ready to update block hashes and crcs
-      u32 used = 0;
+				if (offset + want > 16384) {
+					filecontext.Update(&buffer[16384-offset], (size_t)(offset+want)-16384);
+				}
+			} else {
+				filecontext.Update(buffer, want);
+			}
 
-      // Whilst we have not used all of the data we just read
-      while (used < want)
-      {
-        // How much of it can we use for the current block
-        u32 use = (u32)min(need, (u64)(want-used));
+			// Get ready to update block hashes and crcs
+			u32 used = 0;
 
-        blockcrc = ~0 ^ CRCUpdateBlock(~0 ^ blockcrc, use, &buffer[used]);
-        blockcontext.Update(&buffer[used], use);
+			// Whilst we have not used all of the data we just read
+			while (used < want) {
+				// How much of it can we use for the current block
+				u32 use = (u32)min(need, (u64)(want-used));
 
-        used += use;
-        need -= use;
+				blockcrc = ~0 ^ CRCUpdateBlock(~0 ^ blockcrc, use, &buffer[used]);
+				blockcontext.Update(&buffer[used], use);
 
-        // Have we finished the current block
-        if (need == 0)
-        {
-          MD5Hash blockhash;
-          blockcontext.Final(blockhash);
+				used += use;
+				need -= use;
 
-          // Store the block hash and block crc in the file verification packet.
-          verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
+				// Have we finished the current block
+				if (need == 0) {
+					MD5Hash blockhash;
+					blockcontext.Final(blockhash);
 
-          blocknumber++;
+					// Store the block hash and block crc in the file verification packet.
+					verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
 
-          // More blocks
-          if (blocknumber < blockcount)
-          {
-            need = blocksize;
+					blocknumber++;
 
-            blockcontext.Reset();
-            blockcrc = 0;
-          }
-        }
-      }
+					// More blocks
+					if (blocknumber < blockcount) {
+						need = blocksize;
 
-      if (noiselevel > CommandLine::nlQuiet)
-      {
-        // Display progress
-        u32 oldfraction = (u32)(1000 * offset / filesize);
-        offset += want;
-        u32 newfraction = (u32)(1000 * offset / filesize);
-        if (oldfraction != newfraction)
-        {
-          cout << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
-        }
-      }
-    }
+						blockcontext.Reset();
+						blockcrc = 0;
+					}
+				}
+			}
 
-    // Did we finish the last block
-    if (need > 0)
-    {
-      blockcrc = ~0 ^ CRCUpdateBlock(~0 ^ blockcrc, (size_t)need);
-      blockcontext.Update((size_t)need);
+			if (noiselevel > CommandLine::nlQuiet) {
+				// Display progress
+				u32 oldfraction = (u32)(1000 * offset / filesize);
+				offset += want;
+				u32 newfraction = (u32)(1000 * offset / filesize);
+				if (oldfraction != newfraction) {
+					cout << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
+				}
+			} else {
+				offset += want;
+			}
+		}
 
-      MD5Hash blockhash;
-      blockcontext.Final(blockhash);
+		// Did we finish the last block
+		if (need > 0) {
+			blockcrc = ~0 ^ CRCUpdateBlock(~0 ^ blockcrc, (size_t)need);
+			blockcontext.Update((size_t)need);
 
-      // Store the block hash and block crc in the file verification packet.
-      verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
+			MD5Hash blockhash;
+			blockcontext.Final(blockhash);
 
-      blocknumber++;
+			// Store the block hash and block crc in the file verification packet.
+			verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
 
-      need = 0;
-    }
+			blocknumber++;
 
-    // Finish computing the file hash.
-    MD5Hash filehash;
-    filecontext.Final(filehash);
+			need = 0;
+		}
 
-    // Store the file hash in the file description packet.
-    descriptionpacket->HashFull(filehash);
+		// Finish computing the file hash.
+		MD5Hash filehash;
+		filecontext.Final(filehash);
 
-    // Did we compute the 16k hash.
-    if (offset < 16384)
-    {
-      // Store the 16k hash in the file description packet.
-      descriptionpacket->Hash16k(filehash);
-    }
+		// Store the file hash in the file description packet.
+		descriptionpacket->HashFull(filehash);
 
-    delete [] buffer;
+		// Did we compute the 16k hash.
+		if (offset < 16384) {
+			// Store the 16k hash in the file description packet.
+			descriptionpacket->Hash16k(filehash);
+		}
 
-    // Compute the fileid and store it in the verification packet.
-    descriptionpacket->ComputeFileId();
-    verificationpacket->FileId(descriptionpacket->FileId());
-  }
+		delete [] buffer;
 
-  return true;
+		// Compute the fileid and store it in the verification packet.
+		descriptionpacket->ComputeFileId();
+		verificationpacket->FileId(descriptionpacket->FileId());
+	}
+
+	return true;
 }
 
-void Par2CreatorSourceFile::Close(void)
-{
-  diskfile->Close();
+void Par2CreatorSourceFile::Close(void) {
+	diskfile->Close();
 }
 
 
-void Par2CreatorSourceFile::RecordCriticalPackets(list<CriticalPacket*> &criticalpackets)
-{
-  // Add the file description packet and file verification packet to
-  // the critical packet list.
-  criticalpackets.push_back(descriptionpacket);
-  criticalpackets.push_back(verificationpacket);
+void Par2CreatorSourceFile::RecordCriticalPackets(list<CriticalPacket*> &criticalpackets) {
+	// Add the file description packet and file verification packet to
+	// the critical packet list.
+	criticalpackets.push_back(descriptionpacket);
+	criticalpackets.push_back(verificationpacket);
 }
 
-bool Par2CreatorSourceFile::CompareLess(const Par2CreatorSourceFile* const &left, const Par2CreatorSourceFile* const &right)
-{
-  // Sort source files based on fileid
-  return left->descriptionpacket->FileId() < right->descriptionpacket->FileId();
+bool Par2CreatorSourceFile::CompareLess(const Par2CreatorSourceFile* const &left, const Par2CreatorSourceFile* const &right) {
+	// Sort source files based on fileid
+	return left->descriptionpacket->FileId() < right->descriptionpacket->FileId();
 }
 
-const MD5Hash& Par2CreatorSourceFile::FileId(void) const
-{
-  // Get the file id hash
-  return descriptionpacket->FileId();
+const MD5Hash& Par2CreatorSourceFile::FileId(void) const {
+	// Get the file id hash
+	return descriptionpacket->FileId();
 }
 
-void Par2CreatorSourceFile::InitialiseSourceBlocks(vector<DataBlock>::iterator &sourceblock, u64 blocksize)
-{
-  for (u32 blocknum=0; blocknum<blockcount; blocknum++)
-  {
-    // Configure each source block to an appropriate offset and length within the source file.
-    sourceblock->SetLocation(diskfile,                                       // file
-                             blocknum * blocksize);                          // offset
-    sourceblock->SetLength(min(blocksize, filesize - (u64)blocknum * blocksize)); // length
-    sourceblock++;
-  }
+void Par2CreatorSourceFile::InitialiseSourceBlocks(vector<DataBlock>::iterator &sourceblock, u64 blocksize) {
+	for (u32 blocknum=0; blocknum<blockcount; blocknum++) {
+		// Configure each source block to an appropriate offset and length within the source file.
+		sourceblock->SetLocation(diskfile,                                       // file
+														 blocknum * blocksize);                          // offset
+		sourceblock->SetLength(min(blocksize, filesize - (u64)blocknum * blocksize)); // length
+		sourceblock++;
+	}
 }
 
-void Par2CreatorSourceFile::UpdateHashes(u32 blocknumber, const void *buffer, size_t length)
-{
-  // Compute the crc and hash of the data
-  u32 blockcrc = ~0 ^ CRCUpdateBlock(~0, length, buffer);
-  MD5Context blockcontext;
-  blockcontext.Update(buffer, length);
-  MD5Hash blockhash;
-  blockcontext.Final(blockhash);
+void Par2CreatorSourceFile::UpdateHashes(u32 blocknumber, const void *buffer, size_t length) {
+	// Compute the crc and hash of the data
+	u32 blockcrc = ~0 ^ CRCUpdateBlock(~0, length, buffer);
+	MD5Context blockcontext;
+	blockcontext.Update(buffer, length);
+	MD5Hash blockhash;
+	blockcontext.Final(blockhash);
 
-  // Store the results in the verification packet
-  verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
+	// Store the results in the verification packet
+	verificationpacket->SetBlockHashAndCRC(blocknumber, blockhash, blockcrc);
 
 
-  // Update the full file hash, but don't go beyond the end of the file
-  if (length > filesize - blocknumber * length)
-  {
-    length = (size_t)(filesize - blocknumber * (u64)length);
-  }
+	// Update the full file hash, but don't go beyond the end of the file
+	if ((u64)length > filesize - blocknumber * (u64)length) {
+		length = (size_t)(filesize - blocknumber * (u64)length);
+	}
 
-  assert(contextfull != 0);
+	assert(contextfull != 0);
 
-  contextfull->Update(buffer, length);
+	contextfull->Update(buffer, length);
 }
 
-void Par2CreatorSourceFile::FinishHashes(void)
-{
-  assert(contextfull != 0);
+void Par2CreatorSourceFile::FinishHashes(void) {
+	assert(contextfull != 0);
 
-  // Finish computation of the full file hash
-  MD5Hash hash;
-  contextfull->Final(hash);
+	// Finish computation of the full file hash
+	MD5Hash hash;
+	contextfull->Final(hash);
 
-  // Store it in the description packet
-  descriptionpacket->HashFull(hash);
+	// Store it in the description packet
+	descriptionpacket->HashFull(hash);
 }

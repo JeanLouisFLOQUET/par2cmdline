@@ -33,8 +33,7 @@
 // the object also computes the MD5 Hash of the whole file and of
 // the first 16k of the file for later tests.
 
-class FileCheckSummer
-{
+class FileCheckSummer {
 public:
   FileCheckSummer(DiskFile   *diskfile,
                   u64         blocksize,
@@ -108,41 +107,35 @@ protected:
 
 // Return the current checksum
 
-inline u32 FileCheckSummer::Checksum(void) const
-{
+inline u32 FileCheckSummer::Checksum(void) const {
   return checksum;
 }
 
 // Return the current block length
 
-inline u64 FileCheckSummer::BlockLength(void) const
-{
+inline u64 FileCheckSummer::BlockLength(void) const {
   return min(blocksize, filesize-currentoffset);
 }
 
 // Return whether or not the current block is a short one.
-inline bool FileCheckSummer::ShortBlock(void) const
-{
+inline bool FileCheckSummer::ShortBlock(void) const {
   return BlockLength() < blocksize;
 }
 
 // Return the current file offset
-inline u64 FileCheckSummer::Offset(void) const
-{
+inline u64 FileCheckSummer::Offset(void) const {
   return currentoffset;
 }
 
 // Step forward one byte
-inline bool FileCheckSummer::Step(void)
-{
+inline bool FileCheckSummer::Step(void) {
   // Are we already at the end of the file
   if (currentoffset >= filesize)
     return false;
 
-  // Advance the file offset and check to see if 
+  // Advance the file offset and check to see if
   // we have reached the end of the file
-  if (++currentoffset >= filesize)
-  {
+  if (++currentoffset >= filesize) {
     currentoffset = filesize;
     tailpointer = outpointer = buffer;
     memset(buffer, 0, (size_t)blocksize);

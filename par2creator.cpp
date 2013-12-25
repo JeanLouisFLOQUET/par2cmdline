@@ -46,8 +46,7 @@ Par2Creator::Par2Creator(void)
 , mainpacket        (0)
 , creatorpacket     (0)
 
-, deferhashcomputation(false)
-{
+, deferhashcomputation(false) {
 }
 
 Par2Creator::~Par2Creator(void) {
@@ -99,8 +98,7 @@ Result Par2Creator::Process(const CommandLine &commandline) {
 	if (!ComputeRecoveryFileCount())
 		return eInvalidCommandLineArguments;
 
-	if (noiselevel > CommandLine::nlQuiet)
-	{
+	if (noiselevel > CommandLine::nlQuiet) {
 		// Display information.
 		cout << "Block size: " << blocksize << endl;
 		cout << "Source file count: " << sourcefilecount << endl;
@@ -248,8 +246,7 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 				u64 count;
 				u64 size;
 
-				// Work out how many blocks you get for the lower bound block size
-				{
+				// Work out how many blocks you get for the lower bound block size {
 					size = lowerBound;
 
 					count = 0;
@@ -264,8 +261,7 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 					}
 				}
 
-				// Work out how many blocks you get for the upper bound block size
-				{
+				// Work out how many blocks you get for the upper bound block size {
 					size = upperBound;
 
 					count = 0;
@@ -295,7 +291,7 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 						bestsize = size;
 					}
 
-					     if (count < sourceblockcount) { upperBound = size; }
+							 if (count < sourceblockcount) { upperBound = size; }
 					else if (count > sourceblockcount) { lowerBound = size; }
 					else                               { upperBound = size; }
 				}
@@ -343,8 +339,7 @@ bool Par2Creator::ComputeRecoveryBlockCount(u32 redundancy) {
 }
 
 // Determine how much recovery data can be computed on one pass
-bool Par2Creator::CalculateProcessBlockSize(size_t memorylimit)
-{
+bool Par2Creator::CalculateProcessBlockSize(size_t memorylimit) {
 	// Are we computing any recovery blocks
 	if (recoveryblockcount == 0) {
 		deferhashcomputation = false;
@@ -391,23 +386,23 @@ bool Par2Creator::ComputeRecoveryFileCount(void) {
 				}
 			}
 
-			if ((RecoveryFileCountAdjust) && (recoveryfilecount>recoveryblockcount)) { 
-				cout << "Adjusting number of recovery files :"                               "\n"                                        
-				        "    Total blocks in sources files : " << sourceblockcount   <<      "\n"          
-				        "    Redundancy                    : " << redundancy         << " %" "\n"
-				        "    Recovery blocks to create     : " << recoveryblockcount <<      "\n"  
-				        "    Recovery files                : " << recoveryfilecount  << " => " << recoveryblockcount << "\n";        
-				recoveryfilecount = recoveryblockcount; 
+			if ((RecoveryFileCountAdjust) && (recoveryfilecount>recoveryblockcount)) {
+				cout << "Adjusting number of recovery files :"                               "\n"
+								"    Total blocks in sources files : " << sourceblockcount   <<      "\n"
+								"    Redundancy                    : " << redundancy         << " %" "\n"
+								"    Recovery blocks to create     : " << recoveryblockcount <<      "\n"
+								"    Recovery files                : " << recoveryfilecount  << " => " << recoveryblockcount << "\n";
+				recoveryfilecount = recoveryblockcount;
 			}
 
 			if (recoveryfilecount>recoveryblockcount) {
 				// You cannot have move recovery files that there are recovery blocks to put in them.
-				cerr << "Too many recovery files specified."                                 "\n"                                        
-				        "For information :"                                                  "\n"                                                 
-				        "    Total blocks in sources files : " << sourceblockcount   <<      "\n"          
-				        "    Redundancy                    : " << redundancy         << " %" "\n"
-				        "    Recovery blocks to create     : " << recoveryblockcount <<      "\n"  
-				        "    Recovery files  to create     : " << recoveryfilecount  <<      "\n";          
+				cerr << "Too many recovery files specified."                                 "\n"
+								"For information :"                                                  "\n"
+								"    Total blocks in sources files : " << sourceblockcount   <<      "\n"
+								"    Redundancy                    : " << redundancy         << " %" "\n"
+								"    Recovery blocks to create     : " << recoveryblockcount <<      "\n"
+								"    Recovery files  to create     : " << recoveryfilecount  <<      "\n";
 				return false;
 			}
 		}
@@ -437,8 +432,7 @@ bool Par2Creator::ComputeRecoveryFileCount(void) {
 
 // Open all of the source files, compute the Hashes and CRC values, and store
 // the results in the file verification and file description packets.
-bool Par2Creator::OpenSourceFiles(const list<CommandLine::ExtraFile> &extrafiles)
-{
+bool Par2Creator::OpenSourceFiles(const list<CommandLine::ExtraFile> &extrafiles) {
 	ExtraFileIterator extrafile = extrafiles.begin();
 	while (extrafile != extrafiles.end()) {
 		Par2CreatorSourceFile *sourcefile = new Par2CreatorSourceFile;
@@ -532,8 +526,7 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename) {
 
 	// Choose filenames and decide which recovery blocks to place in each file
 	vector<FileAllocation> fileallocations;
-	fileallocations.resize(recoveryfilecount+1); // One extra file with no recovery blocks
-	{
+	fileallocations.resize(recoveryfilecount+1); // One extra file with no recovery blocks {
 		// Decide how many recovery blocks to place in each file
 		u32 exponent = firstrecoveryblock;
 		if (recoveryfilecount > 0) {
@@ -625,8 +618,7 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename) {
 		fileallocations[recoveryfilecount].count = 0;
 
 		// Determine the format to use for filenames of recovery files
-		char filenameformat[300];
-		{
+		char filenameformat[300]; {
 			u32 limitLow   = 0;
 			u32 limitCount = 0;
 			for (u32 filenumber=0; filenumber<=recoveryfilecount; filenumber++) {
@@ -656,12 +648,10 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename) {
 		fileallocations[recoveryfilecount].filename = par2filename + ".par2";
 	}
 
-	// Allocate the recovery files
-	{
+	// Allocate the recovery files {
 		recoveryfiles.resize(recoveryfilecount+1);
 
-		// Allocate packets to the output files
-		{
+		// Allocate packets to the output files {
 			const MD5Hash &setid = mainpacket->SetId();
 			vector<RecoveryPacket>::iterator recoverypacket = recoverypackets.begin();
 
@@ -669,8 +659,7 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename) {
 			vector<FileAllocation>::iterator fileallocation = fileallocations.begin();
 
 			// For each recovery file:
-			while (recoveryfile != recoveryfiles.end())
-			{
+			while (recoveryfile != recoveryfiles.end()) {
 				// How many recovery blocks in this file
 				u32 count = fileallocation->count;
 
@@ -814,8 +803,7 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength) {
 		}
 
 		// For each output block
-		for (u32 outputblock=0; outputblock<recoveryblockcount; outputblock++)
-		{
+		for (u32 outputblock=0; outputblock<recoveryblockcount; outputblock++) {
 			// Select the appropriate part of the output buffer
 			void *outbuf = &((u8*)outputbuffer)[chunksize * outputblock];
 
@@ -915,8 +903,7 @@ bool Par2Creator::WriteCriticalPackets(void) {
 	list<CriticalPacketEntry>::const_iterator packetentry = criticalpacketentries.begin();
 
 	// For each critical packet
-	while (packetentry != criticalpacketentries.end())
-	{
+	while (packetentry != criticalpacketentries.end()) {
 		// Write it to disk
 		if (!packetentry->WritePacket())
 			return false;

@@ -29,8 +29,7 @@ class DiskFile;
 // data is being computed, a block of recovery data in a recovery file, or
 // a block in a target file that is being reconstructed.
 
-class DataBlock
-{
+class DataBlock {
 public:
   DataBlock(void);
   ~DataBlock(void);
@@ -74,59 +73,50 @@ protected:
 
 
 // Construct the data block
-inline DataBlock::DataBlock(void)
-{
+inline DataBlock::DataBlock(void) {
   diskfile = 0;
   offset = 0;
   length = 0;
 }
 
 // Destroy the data block
-inline DataBlock::~DataBlock(void)
-{
+inline DataBlock::~DataBlock(void) {
 }
 
 // Set the length of the block
-inline void DataBlock::SetLength(u64 _length)
-{
+inline void DataBlock::SetLength(u64 _length) {
   length = _length;
 }
 
 // Set the location of the block
-inline void DataBlock::SetLocation(DiskFile *_diskfile, u64 _offset)
-{
+inline void DataBlock::SetLocation(DiskFile *_diskfile, u64 _offset) {
   diskfile = _diskfile;
   offset = _offset;
 }
 
 // Clear the location of the block
-inline void DataBlock::ClearLocation(void)
-{
+inline void DataBlock::ClearLocation(void) {
   diskfile = 0;
   offset = 0;
 }
 
 // Check to see of the location is known
-inline bool DataBlock::IsSet(void) const
-{
+inline bool DataBlock::IsSet(void) const {
   return (diskfile != 0);
 }
 
 // Which disk file is this data block in
-inline DiskFile* DataBlock::GetDiskFile(void) const
-{
+inline DiskFile* DataBlock::GetDiskFile(void) const {
   return diskfile;
 }
 
 // What offset is the block located at
-inline u64 DataBlock::GetOffset(void) const
-{
+inline u64 DataBlock::GetOffset(void) const {
   return offset;
 }
 
 // What is the length of this block
-inline u64 DataBlock::GetLength(void) const
-{
+inline u64 DataBlock::GetLength(void) const {
   return length;
 }
 

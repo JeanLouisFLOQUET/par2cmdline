@@ -28,8 +28,7 @@ typedef u64 leu64;
 
 #else
 
-class leu16
-{
+class leu16 {
 public:
   leu16(void);
 
@@ -45,44 +44,37 @@ protected:
   u16 value;
 };
 
-inline leu16::leu16(void)
-{
+inline leu16::leu16(void) {
 }
 
 inline leu16::leu16(const leu16 &other)
-: value(other.value)
-{
+: value(other.value) {
 }
 
-inline leu16& leu16::operator =(const leu16 &other)
-{
+inline leu16& leu16::operator =(const leu16 &other) {
   value = other.value;
   return *this;
 }
 
-inline leu16::leu16(const u16 &other)
-{
+inline leu16::leu16(const u16 &other) {
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
 }
 
-inline leu16& leu16::operator=(const u16 &other)
-{
+inline leu16& leu16::operator=(const u16 &other) {
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
 
   return *this;
 }
 
-inline leu16::operator u16(void) const
-{
+inline leu16::operator u16(void) const {
   return ((unsigned char*)&value)[0] << 0 |
          ((unsigned char*)&value)[1] << 8;
 }
 
 
-class leu32
-{
+class leu32 {
 public:
   leu32(void);
 
@@ -98,31 +90,26 @@ protected:
   u32 value;
 };
 
-inline leu32::leu32(void)
-{
+inline leu32::leu32(void) {
 }
 
 inline leu32::leu32(const leu32 &other)
-: value(other.value)
-{
+: value(other.value) {
 }
 
-inline leu32& leu32::operator =(const leu32 &other)
-{
+inline leu32& leu32::operator =(const leu32 &other) {
   value = other.value;
   return *this;
 }
 
-inline leu32::leu32(const u32 &other)
-{
+inline leu32::leu32(const u32 &other) {
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
   ((unsigned char*)&value)[2] = (unsigned char)((other >> 16) & 0xff);
   ((unsigned char*)&value)[3] = (unsigned char)((other >> 24) & 0xff);
 }
 
-inline leu32& leu32::operator=(const u32 &other)
-{
+inline leu32& leu32::operator=(const u32 &other) {
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
   ((unsigned char*)&value)[2] = (unsigned char)((other >> 16) & 0xff);
@@ -131,8 +118,7 @@ inline leu32& leu32::operator=(const u32 &other)
   return *this;
 }
 
-inline leu32::operator u32(void) const
-{
+inline leu32::operator u32(void) const {
   return ((unsigned char*)&value)[0] << 0 |
          ((unsigned char*)&value)[1] << 8 |
          ((unsigned char*)&value)[2] << 16 |
@@ -140,8 +126,7 @@ inline leu32::operator u32(void) const
 }
 
 
-class leu64
-{
+class leu64 {
 public:
   leu64(void);
 
@@ -157,23 +142,19 @@ protected:
   u64 value;
 };
 
-inline leu64::leu64(void)
-{
+inline leu64::leu64(void) {
 }
 
 inline leu64::leu64(const leu64 &other)
-: value(other.value)
-{
+: value(other.value) {
 }
 
-inline leu64& leu64::operator =(const leu64 &other)
-{
+inline leu64& leu64::operator =(const leu64 &other) {
   value = other.value;
   return *this;
 }
 
-inline leu64::leu64(const u64 &other)
-{
+inline leu64::leu64(const u64 &other) {
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
   ((unsigned char*)&value)[2] = (unsigned char)((other >> 16) & 0xff);
@@ -184,8 +165,7 @@ inline leu64::leu64(const u64 &other)
   ((unsigned char*)&value)[7] = (unsigned char)((other >> 56) & 0xff);
 }
 
-inline leu64& leu64::operator=(const u64 &other)
-{
+inline leu64& leu64::operator=(const u64 &other) {
   ((unsigned char*)&value)[0] = (unsigned char)((other >> 0) & 0xff);
   ((unsigned char*)&value)[1] = (unsigned char)((other >> 8) & 0xff);
   ((unsigned char*)&value)[2] = (unsigned char)((other >> 16) & 0xff);
@@ -198,8 +178,7 @@ inline leu64& leu64::operator=(const u64 &other)
   return *this;
 }
 
-inline leu64::operator u64(void) const
-{
+inline leu64::operator u64(void) const {
   return (u64)(((unsigned char*)&value)[0]) << 0 |
          (u64)(((unsigned char*)&value)[1]) << 8 |
          (u64)(((unsigned char*)&value)[2]) << 16 |

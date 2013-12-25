@@ -21,12 +21,12 @@
 #define __CRC_H__
 
 // These global functions are used to compute the CCITT CRC32 checksum of
-// blocks of data. 
+// blocks of data.
 
-// The CRC for a block of data may be computed piecemeal be repeatedly 
-// calling CRCUpdateChar, and CRCUpdateBlock. 
+// The CRC for a block of data may be computed piecemeal be repeatedly
+// calling CRCUpdateChar, and CRCUpdateBlock.
 
-// Given the CRC for a block of data in a buffer, CRCSlideChar may be used 
+// Given the CRC for a block of data in a buffer, CRCSlideChar may be used
 // to quickly compute the CRC for the block of data in the buffer that is the
 // same size but offset one character later in the buffer.
 
@@ -35,10 +35,8 @@
 void GenerateCRC32Table(u32 polynomial, u32 (&table)[256]);
 
 // A CRC32 lookup table
-struct crc32table
-{
-  crc32table(u32 polynomial)
-  {
+struct crc32table {
+  crc32table(u32 polynomial) {
     GenerateCRC32Table(polynomial, table);
   }
 
@@ -49,18 +47,15 @@ struct crc32table
 extern crc32table ccitttable;
 
 // Update the CRC using one character
-inline u32 CRCUpdateChar(u32 crc, u8 ch)
-{
+inline u32 CRCUpdateChar(u32 crc, u8 ch) {
   return ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc ^ ch];
 }
 
 // Update the CRC using a block of characters in a buffer
-inline u32 CRCUpdateBlock(u32 crc, size_t length, const void *buffer)
-{
+inline u32 CRCUpdateBlock(u32 crc, size_t length, const void *buffer) {
   const unsigned char *current = (const unsigned char *)buffer;
 
-  while (length-- > 0)
-  {
+  while (length-- > 0) {
     crc =  ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc ^ (*current++)];
   }
 
@@ -68,10 +63,8 @@ inline u32 CRCUpdateBlock(u32 crc, size_t length, const void *buffer)
 }
 
 // Update the CRC using a block of 0s.
-inline u32 CRCUpdateBlock(u32 crc, size_t length)
-{
-  while (length-- > 0)
-  {
+inline u32 CRCUpdateBlock(u32 crc, size_t length) {
+  while (length-- > 0) {
     crc =  ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc];
   }
 
@@ -86,8 +79,7 @@ u32 ComputeWindowMask(u64 window);
 // Slide the CRC along a buffer by one character (removing the old and adding the new).
 // The new character is added using the main CCITT CRC32 table, and the old character
 // is removed using the windowtable.
-inline u32 CRCSlideChar(u32 crc, u8 chNew, u8 chOld, const u32 (&windowtable)[256])
-{
+inline u32 CRCSlideChar(u32 crc, u8 chNew, u8 chOld, const u32 (&windowtable)[256]) {
   return ((crc >> 8) & 0x00ffffffL) ^ ccitttable.table[(u8)crc ^ chNew] ^ windowtable[chOld];
 }
 

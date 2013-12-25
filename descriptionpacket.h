@@ -23,8 +23,7 @@
 // The description packet records details about a file (including its name,
 // size, and the Hash of both the whole file and the first 16k of the file).
 
-class DescriptionPacket : public CriticalPacket
-{
+class DescriptionPacket : public CriticalPacket {
 public:
   // Construct the packet
   DescriptionPacket(void) {};
@@ -58,16 +57,14 @@ public:
 };
 
 // Get the file id from the packet
-inline const MD5Hash& DescriptionPacket::FileId(void) const
-{
+inline const MD5Hash& DescriptionPacket::FileId(void) const {
   assert(packetdata != 0);
 
   return ((const FILEDESCRIPTIONPACKET*)packetdata)->fileid;
 }
 
 // Get the size of the file from the packet
-inline u64 DescriptionPacket::FileSize(void) const
-{
+inline u64 DescriptionPacket::FileSize(void) const {
   assert(packetdata != 0);
 
   return ((const FILEDESCRIPTIONPACKET*)packetdata)->length;
@@ -78,8 +75,7 @@ inline u64 DescriptionPacket::FileSize(void) const
 // termination character, par2cmdline always allocates a little extra data
 // and fills it with NULLs to allow the filename to be directly read out of
 // the packet.
-inline string DescriptionPacket::FileName(void) const
-{
+inline string DescriptionPacket::FileName(void) const {
   assert(packetdata != 0);
 
 //  return (char*)((const FILEDESCRIPTIONPACKET*)packetdata)->name();
@@ -87,16 +83,14 @@ inline string DescriptionPacket::FileName(void) const
 }
 
 // Get the full file hash value from the packet
-inline const MD5Hash& DescriptionPacket::HashFull(void) const
-{
+inline const MD5Hash& DescriptionPacket::HashFull(void) const {
   assert(packetdata != 0);
 
   return ((const FILEDESCRIPTIONPACKET*)packetdata)->hashfull;
 }
 
 // The the hash of the first 16k of the file from the packet
-inline const MD5Hash& DescriptionPacket::Hash16k(void) const
-{
+inline const MD5Hash& DescriptionPacket::Hash16k(void) const {
   assert(packetdata != 0);
 
   return ((const FILEDESCRIPTIONPACKET*)packetdata)->hash16k;
