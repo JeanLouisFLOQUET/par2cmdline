@@ -199,7 +199,7 @@
 	  Test files for "make check".
 
 	* Changed commandline.cpp, commandline.h: Add "version" member
-          and set it according to whether the recovery file is a .PAR file
+	  and set it according to whether the recovery file is a .PAR file
 	  or a .PAR2 file. Rename "par2filename" member to "parfilename".
 
 	* Changed creatorpacket.cpp: Made "string creator" a local variable

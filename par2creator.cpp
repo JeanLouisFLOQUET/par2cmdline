@@ -209,8 +209,8 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 	}
 	else if (sourceblockcount > 0) {
 		if (sourceblockcount < extrafiles.size()) {
-			// The block count cannot be less that the number of files.
-			cerr << "Block count is too small." << endl;
+			// The block count cannot be less than the number of files.
+			cerr << "Block count (" << sourceblockcount << ") can not be smaller than the number of files(" << extrafiles.size() << "). " << endl;
 			return false;
 		} else if (sourceblockcount == extrafiles.size()) {
 			// If the block count is the same as the number of files, then the block
@@ -246,7 +246,8 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 				u64 count;
 				u64 size;
 
-				// Work out how many blocks you get for the lower bound block size {
+				// Work out how many blocks you get for the lower bound block size
+				{
 					size = lowerBound;
 
 					count = 0;
@@ -261,7 +262,8 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 					}
 				}
 
-				// Work out how many blocks you get for the upper bound block size {
+				// Work out how many blocks you get for the upper bound block size
+				{
 					size = upperBound;
 
 					count = 0;
@@ -291,7 +293,7 @@ bool Par2Creator::ComputeBlockSizeAndBlockCount(const list<CommandLine::ExtraFil
 						bestsize = size;
 					}
 
-							 if (count < sourceblockcount) { upperBound = size; }
+					     if (count < sourceblockcount) { upperBound = size; }
 					else if (count > sourceblockcount) { lowerBound = size; }
 					else                               { upperBound = size; }
 				}
@@ -526,7 +528,8 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename) {
 
 	// Choose filenames and decide which recovery blocks to place in each file
 	vector<FileAllocation> fileallocations;
-	fileallocations.resize(recoveryfilecount+1); // One extra file with no recovery blocks {
+	fileallocations.resize(recoveryfilecount+1); // One extra file with no recovery blocks
+	{
 		// Decide how many recovery blocks to place in each file
 		u32 exponent = firstrecoveryblock;
 		if (recoveryfilecount > 0) {
@@ -618,7 +621,8 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename) {
 		fileallocations[recoveryfilecount].count = 0;
 
 		// Determine the format to use for filenames of recovery files
-		char filenameformat[300]; {
+		char filenameformat[300];
+		{
 			u32 limitLow   = 0;
 			u32 limitCount = 0;
 			for (u32 filenumber=0; filenumber<=recoveryfilecount; filenumber++) {
@@ -648,10 +652,12 @@ bool Par2Creator::InitialiseOutputFiles(string par2filename) {
 		fileallocations[recoveryfilecount].filename = par2filename + ".par2";
 	}
 
-	// Allocate the recovery files {
+	// Allocate the recovery files
+	{
 		recoveryfiles.resize(recoveryfilecount+1);
 
-		// Allocate packets to the output files {
+		// Allocate packets to the output files
+		{
 			const MD5Hash &setid = mainpacket->SetId();
 			vector<RecoveryPacket>::iterator recoverypacket = recoverypackets.begin();
 

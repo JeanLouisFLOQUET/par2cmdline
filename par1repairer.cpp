@@ -164,7 +164,7 @@ Result Par1Repairer::Process(const CommandLine &commandline, bool dorepair) {
 
 				// Start at an offset of 0 within a block.
 				u64 blockoffset = 0;
-				while (blockoffset < blocksize) // Continue until the end of the block. {
+				while (blockoffset < blocksize) { // Continue until the end of the block.
 					// Work out how much data to process this time.
 					size_t blocklength = (size_t)min((u64)chunksize, blocksize-blockoffset);
 
@@ -359,8 +359,7 @@ bool Par1Repairer::LoadRecoveryFile(string filename) {
 					Par1RepairerSourceFile *sourcefile = new Par1RepairerSourceFile(fileentry, searchpath);
 					if (fileentry->status & INPARITYVOLUME) {
 						sourcefiles.push_back(sourcefile);
-					}
-					else {
+					} else {
 						extrafiles.push_back(sourcefile);
 					}
 
@@ -525,9 +524,7 @@ bool Par1Repairer::VerifySourceFiles(void) {
 		// Check to see if we have already used this file
 		if (diskfilemap.Find(filename) != 0) {
 			// The file has already been used!
-
 			cerr << "Source file " << filenumber+1 << " is a duplicate." << endl;
-
 			return false;
 		}
 
@@ -649,7 +646,6 @@ bool Par1Repairer::VerifyDataFile(DiskFile *diskfile, Par1RepairerSourceFile *so
 		}
 		return true;
 	}
-
 
 	// Search for the first file that is the correct size
 	vector<Par1RepairerSourceFile*>::iterator sourceiterator = sourcefiles.begin();

@@ -58,17 +58,6 @@ void Par2RepairerSourceFile::SetVerificationPacket(VerificationPacket *_verifica
 void Par2RepairerSourceFile::ComputeTargetFileName(string path) {
 	// Get a version of the filename compatible with the OS
 	string filename = DiskFile::TranslateFilename(descriptionpacket->FileName());
-
-	// Strip the path from the filename
-	string::size_type where;
-	if (string::npos != (where = filename.find_last_of('\\'))
-	 || string::npos != (where = filename.find_last_of('/'))
-	#ifdef WIN32
-	 || string::npos != (where = filename.find_last_of(':'))
-	#endif
-		 ) {
-//		filename = filename.substr(where+1); // JLF
-	}
 	targetfilename = path + filename;
 }
 

@@ -288,10 +288,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 							recoveryfilecount = recoveryfilecount * 10 + (*p - '0');
 							p++;
 						}
-						if (recoveryfilecount == 0 || *p) {
-							cerr << "Invalid recovery file count option: " << argv[0] << endl;
-							return false;
-						}
+						if (recoveryfilecount == 0 || *p) { cerr << "Invalid recovery file count option: " << argv[0] << endl; return false; }
 
 						if (argv[0][1]=='N') { RecoveryFileCountAdjust = 1; }
 						if (argv[0][1]=='n') { RecoveryFileCountAdjust = 0; }

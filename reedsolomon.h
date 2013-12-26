@@ -156,8 +156,7 @@ inline bool ReedSolomon<g>::SetOutput(bool present, u16 exponent) {
   // Update the counts.
   if (present) {
     parpresent++;
-  }
-  else {
+  } else {
     parmissing++;
   }
 
@@ -228,32 +227,27 @@ inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel) {
 
   // One row for each present recovery block that will be used for a missing data block
   for (unsigned int row=0; row<datamissing; row++) {
-    if (noiselevel > CommandLine::nlQuiet)
-    {
+    if (noiselevel > CommandLine::nlQuiet) {
       int progress = row * 1000 / (datamissing+parmissing);
       cout << "Constructing: " << progress/10 << '.' << progress%10 << "%\r" << flush;
     }
 
     // Get the exponent of the next present recovery block
-    while (!outputrow->present)
-    {
+    while (!outputrow->present) {
       outputrow++;
     }
     u16 exponent = outputrow->exponent;
 
     // One column for each present data block
-    for (unsigned int col=0; col<datapresent; col++)
-    {
+    for (unsigned int col=0; col<datapresent; col++) {
       leftmatrix[row * incount + col] = G(database[datapresentindex[col]]).pow(exponent);
     }
     // One column for each each present recovery block that will be used for a missing data block
-    for (unsigned int col=0; col<datamissing; col++)
-    {
+    for (unsigned int col=0; col<datamissing; col++) {
       leftmatrix[row * incount + col + datapresent] = (row == col) ? 1 : 0;
     }
 
-    if (datamissing > 0)
-    {
+    if (datamissing > 0) {
       // One column for each missing data block
       for (unsigned int col=0; col<datamissing; col++)
       {
@@ -271,32 +265,27 @@ inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel) {
   // One row for each recovery block being computed
   outputrow = outputrows.begin();
   for (unsigned int row=0; row<parmissing; row++) {
-    if (noiselevel > CommandLine::nlQuiet)
-    {
+    if (noiselevel > CommandLine::nlQuiet) {
       int progress = (row+datamissing) * 1000 / (datamissing+parmissing);
       cout << "Constructing: " << progress/10 << '.' << progress%10 << "%\r" << flush;
     }
 
     // Get the exponent of the next missing recovery block
-    while (outputrow->present)
-    {
+    while (outputrow->present) {
       outputrow++;
     }
     u16 exponent = outputrow->exponent;
 
     // One column for each present data block
-    for (unsigned int col=0; col<datapresent; col++)
-    {
+    for (unsigned int col=0; col<datapresent; col++) {
       leftmatrix[(row+datamissing) * incount + col] = G(database[datapresentindex[col]]).pow(exponent);
     }
     // One column for each each present recovery block that will be used for a missing data block
-    for (unsigned int col=0; col<datamissing; col++)
-    {
+    for (unsigned int col=0; col<datamissing; col++) {
       leftmatrix[(row+datamissing) * incount + col + datapresent] = 0;
     }
 
-    if (datamissing > 0)
-    {
+    if (datamissing > 0) {
       // One column for each missing data block
       for (unsigned int col=0; col<datamissing; col++)
       {
@@ -330,8 +319,7 @@ inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel) {
 template<class g>
 inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsigned int rows, unsigned int leftcols, G *leftmatrix, G *rightmatrix, unsigned int datamissing) {
   if (noiselevel == CommandLine::nlDebug) {
-    for (unsigned int row=0; row<rows; row++)
-    {
+    for (unsigned int row=0; row<rows; row++) {
       cout << ((row==0) ? "/"    : (row==rows-1) ? "\\"    : "|");
       for (unsigned int col=0; col<leftcols; col++)
       {
@@ -372,15 +360,13 @@ inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsign
     // Get the pivot value.
     G pivotvalue = rightmatrix[row * rows + row];
     assert(pivotvalue != 0);
-    if (pivotvalue == 0)
-    {
+    if (pivotvalue == 0) {
       cerr << "RS computation error." << endl;
       return false;
     }
 
     // If the pivot value is not 1, then the whole row has to be scaled
-    if (pivotvalue != 1)
-    {
+    if (pivotvalue != 1) {
       for (unsigned int col=0; col<leftcols; col++)
       {
         if (leftmatrix[row * leftcols + col] != 0)
@@ -399,8 +385,7 @@ inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsign
     }
 
     // For every other row in the matrix
-    for (unsigned int row2=0; row2<rows; row2++)
-    {
+    for (unsigned int row2=0; row2<rows; row2++) {
       if (noiselevel > CommandLine::nlQuiet)
       {
         int newprogress = (row*rows+row2) * 1000 / (datamissing*rows);
@@ -460,8 +445,7 @@ inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsign
   if (noiselevel > CommandLine::nlQuiet)
     cout << "Solving: done." << endl;
   if (noiselevel == CommandLine::nlDebug) {
-    for (unsigned int row=0; row<rows; row++)
-    {
+    for (unsigned int row=0; row<rows; row++) {
       cout << ((row==0) ? "/"    : (row==rows-1) ? "\\"    : "|");
       for (unsigned int col=0; col<leftcols; col++)
       {

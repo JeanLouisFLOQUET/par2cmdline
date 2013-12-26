@@ -679,7 +679,8 @@ bool Par2Repairer::CheckPacketConsistency(void) {
 	blocksize = mainpacket->BlockSize();
 
 	// Check that the recovery blocks have the correct amount of data
-	// and discard any that don't {
+	// and discard any that don't 
+	{
 		map<u32,RecoveryPacket*>::iterator rp = recoverypacketmap.begin();
 		while (rp != recoverypacketmap.end()) {
 			if (rp->second->BlockSize() == blocksize) {
@@ -695,7 +696,8 @@ bool Par2Repairer::CheckPacketConsistency(void) {
 	}
 
 	// Check for source files that have no description packet or where the
-	// verification packet has the wrong number of entries and discard them. {
+	// verification packet has the wrong number of entries and discard them. 
+	{
 		map<MD5Hash, Par2RepairerSourceFile*>::iterator sf = sourcefilemap.begin();
 		while (sf != sourcefilemap.end()) {
 			// Do we have a description packet

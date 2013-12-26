@@ -41,9 +41,10 @@ bool DataBlock::Open(void) {
 // Read some data at a specified position within a data block
 // into a buffer in memory
 
-bool DataBlock::ReadData(u64    position, // Position within the block
-												 size_t size,     // Size of the memory buffer
-												 void  *buffer)   // Pointer to memory buffer {
+bool DataBlock::ReadData( u64    position  // Position within the block
+                        , size_t size      // Size of the memory buffer
+                        , void  *buffer    // Pointer to memory buffer
+                        ) {
 	assert(diskfile != 0);
 
 	// Check to see if the position from which data is to be read
@@ -73,10 +74,11 @@ bool DataBlock::ReadData(u64    position, // Position within the block
 // Write some data at a specified position within a datablock
 // from memory to disk
 
-bool DataBlock::WriteData(u64         position, // Position within the block
-													size_t      size,     // Size of the memory buffer
-													const void *buffer,   // Pointer to memory buffer
-													size_t     &wrote)    // Amount actually written {
+bool DataBlock::WriteData( u64         position  // Position within the block
+                         , size_t      size      // Size of the memory buffer
+                         , const void *buffer    // Pointer to memory buffer
+                         , size_t     &wrote     // Amount actually written
+                         ) {
 	assert(diskfile != 0);
 
 	wrote = 0;

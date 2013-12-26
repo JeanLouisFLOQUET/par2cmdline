@@ -95,8 +95,7 @@
 	  CommandLine::NoiseLevel noiselevel; // How noisy we should be
 
 	  u64 blocksize;      // The size of each block.
-	  size_t chunksize;   // How much of each block will be processed at a
-	                      // time (due to memory constraints).
+	  size_t chunksize;   // How much of each block will be processed at a time (due to memory constraints).
 
 	  void *inputbuffer;  // chunksize
 	  void *outputbuffer; // chunksize * recoveryblockcount
@@ -129,8 +128,7 @@
 	  vector<RecoveryPacket>     recoverypackets;  // Array with one entry for every recovery packet.
 
 	  list<CriticalPacket*>      criticalpackets;  // A list of all of the critical packets.
-	  list<CriticalPacketEntry>  criticalpacketentries; // A list of which critical packet will
-	                                                    // be written to which recovery file.
+	  list<CriticalPacketEntry>  criticalpacketentries; // A list of which critical packet will be written to which recovery file.
 
 	  ReedSolomon<Galois16> rs;   // The Reed Solomon matrix.
 
