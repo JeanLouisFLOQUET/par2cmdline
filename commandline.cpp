@@ -18,13 +18,14 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "config.h"
 
 #ifdef _MSC_VER
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
+	#ifdef _DEBUG
+		#undef THIS_FILE
+		static char THIS_FILE[]=__FILE__;
+		#define new DEBUG_NEW
+	#endif
 #endif
 
 CommandLine::ExtraFile::ExtraFile(void)
@@ -40,7 +41,6 @@ CommandLine::ExtraFile::ExtraFile(const CommandLine::ExtraFile &other)
 CommandLine::ExtraFile& CommandLine::ExtraFile::operator=(const CommandLine::ExtraFile &other) {
 	filename = other.filename;
 	filesize = other.filesize;
-
 	return *this;
 }
 
@@ -48,7 +48,6 @@ CommandLine::ExtraFile::ExtraFile(const string &name, u64 size)
 : filename(name)
 , filesize(size) {
 }
-
 
 CommandLine::CommandLine(void)
 : operation(opNone)
@@ -67,44 +66,114 @@ CommandLine::CommandLine(void)
 , extrafiles()
 , totalsourcesize(0)
 , largestsourcesize(0)
-, memorylimit(0) {
+, RecoveryFileCountAdjust(false)
+, memorylimit(0)
+, purgefiles(false)
+, recursive(false)
+, DisplayHelp(false)
+, VerboseLevel(0)
+{ }
+
+void CommandLine::banner(void) {
+	string version = PACKAGE_NAME " version " PACKAGE_VERSION;
+
+	cout << version                                                                       << endl
+	     << "Copyright (C) 2003-2005 Peter Brian Clements"                                << endl
+	     << "Copyright (C) 2011-2012 Marcel Partap"                                       << endl
+	     << "Copyright (C) 2012-2013 Ike Devolder"                                        << endl
+	     << "Copyright (C) 2013      Jean-Louis FLOQUET"                                  << endl
+	                                                                                      << endl
+	     << "par2cmdline comes with ABSOLUTELY NO WARRANTY."                              << endl
+	     << "This is free software, and you are welcome to redistribute it and/or modify" << endl
+	     << "it under the terms of the GNU General Public License as published by the"    << endl
+	     << "Free Software Foundation; either version 2 of the License, or (at your"      << endl
+	     << "option) any later version. See COPYING for details."                         << endl;
+}
+
+void CommandLine::ParFileNotFound(string parfilename) {
+	cerr << "\"" << parfilename << "\" not found" << endl;
+}
+
+void CommandLine::usage_BlockProperty(void) {
+	cout <<
+		"  Block property (choose only one) :"                                                 "\n"
+		"     -b<n>  : Set the Block-Count"                                                    "\n"
+		"     -s<n>  : Set the Block-Size"                                                     "\n";
+}
+
+void CommandLine::usage_Redundancy(void) {
+	cout <<
+		"  Redundancy (choose only one) :"                                                     "\n"
+		"     -r<n>  : Level of Redundancy (%%)"                                               "\n"
+		"     -c<n>  : Recovery block count"                                                   "\n";
+}
+
+void CommandLine::usage_RecoveryFilesMode(void) {
+	cout <<
+		"  Recovery files (choose only one) :"                                                 "\n"
+		"     -u     : Uniform recovery file sizes"                                            "\n"
+		"     -l     : Limit size of recovery files"                                           "\n";
+}
+
+void CommandLine::usage_RecoveryFilesNumber(void) {
+	cout <<
+		"  Number of recovery files"                                                           "\n"
+		"     -n<n>  : hard fixed                                 (don't use with -l or -N)"   "\n"
+		"     -N<n>  : can be reduced if not enough source blocks (don't use with -l or -n)"   "\n";
+}
+
+void CommandLine::usage_Operation(void) {
+	cout <<
+		"Usage: par2cmdline <Operation> [options] <par2 file> [files]" "\n"
+		"  <Operation> is either :"                             "\n"
+		"      c(reate) : Create PAR2 files"                    "\n"
+		"      v(erify) : Verify files using PAR2 file"         "\n"
+		"      r(epair) : Repair files using PAR2 files"        "\n";
+}
+
+void CommandLine::usage_HelpMain(void) {
+	cout << "Specific options : par2cmdline <Operation> -h\n";
+}
+
+void CommandLine::usage_HelpCreate(void) {
+	cout << "create\n";
+}
+
+void CommandLine::usage_HelpRepair(void) {
+	cout << "repair\n";
+}
+
+void CommandLine::usage_HelpVerify(void) {
+	cout <<
+		"You can specifiy -v<xx> verbose value by adding needed sub-values :"      "\n"
+		"   Do not display banner               :  1"                              "\n"
+		"   Display loading main PAR2 (silent ) :  2"                              "\n"
+		"   Display loading main PAR2 (compact) :  4"                              "\n"
+  		"   DEBUG                               : xx"                              "\n"
+		;
 }
 
 void CommandLine::usage(void) {
+	                                          cout << "\n";
+	CommandLine::usage_Operation          (); cout << "\n";
+	CommandLine::usage_HelpMain           (); cout << "\nOptions:\n";
+	CommandLine::usage_BlockProperty      ();
+	CommandLine::usage_Redundancy         ();
+	CommandLine::usage_RecoveryFilesMode  ();
+	CommandLine::usage_RecoveryFilesNumber();
 	cout <<
-																																													"\n"
-		"Usage:"                                                                              "\n"
-																																													"\n"
-		"  par2 c(reate) [options] <par2 file> [files] : Create PAR2 files"                   "\n"
-		"  par2 v(erify) [options] <par2 file> [files] : Verify files using PAR2 file"        "\n"
-		"  par2 r(epair) [options] <par2 file> [files] : Repair files using PAR2 files"       "\n"
-																																													"\n"
-		"You may also leave out the \"c\", \"v\", and \"r\" commands by using \"parcreate\"," "\n"
-		"\"par2verify\", or \"par2repair\" instead."                                          "\n"
-																																													"\n"
-		"Options:"                                                                            "\n"
-																																													"\n"
-		"  Block property (choose only one) :"                                                "\n"
-		"     -b<n>  : Set the Block-Count"                                                   "\n"
-		"     -s<n>  : Set the Block-Size "                                                   "\n"
-		"  Redundancy (choose only one) :"                                                    "\n"
-		"     -r<n>  : Level of Redundancy (%%)"                                              "\n"
-		"     -c<n>  : Recovery block count"                                                  "\n"
-		"  Recovery files (choose only one) :"                                                "\n"
-		"     -u     : Uniform recovery file sizes"                                           "\n"
-		"     -l     : Limit size of recovery files               (don't use with -u)"        "\n"
-		"  Number of recovery files"                                                          "\n"
-		"     -n<n>  : hard fixed)                                (don't use with -l or -N)"  "\n"
-		"     -N<n>  : can be reduced if not enough source blocks (don't use with -l or -n)"  "\n"
-		"  Misc :"                                                                            "\n"
-		"     -f<n>  : First Recovery-Block-Number"                                           "\n"
-		"     -m<n>  : Memory (in MB) to use"                                                 "\n"
-		"     -v [-v]: Be more verbose"                                                       "\n"
-		"     -q [-q]: Be more quiet (-q -q gives silence)"                                   "\n"
-		"     --     : Treat all remaining CommandLine as filenames"                          "\n"
-																																													"\n"
-		"If you wish to create par2 files for a single source file, you may leave"            "\n"
-		"out the name of the par2 file from the command line."                                "\n";
+		"  Misc :"                                                                             "\n"
+		"     -a<f>  : set the main par2 archive name"                                         "\n"
+		"     -f<n>  : First Recovery-Block-Number"                                            "\n"
+		"     -m<n>  : Memory (in MB) to use"                                                  "\n"
+		"     -v [-v]: Be more verbose"                                                        "\n"
+		"     -q [-q]: Be more quiet (-q -q gives silence)"                                    "\n"
+		"     -p     : Purge backup/par files on successful/useless recovery"                  "\n"
+		"     -R     : Recurse into subdirectories (only usefull on create)"                   "\n"
+		"     --     : Treat all remaining CommandLine as filenames"                           "\n"
+		                                                                                       "\n"
+		"If you wish to create par2 files for a single source file, you may leave"             "\n"
+		"out the name of the par2 file from the command line."                                 "\n";
 }
 
 bool CommandLine::Parse(int argc, char *argv[]) {
@@ -145,7 +214,6 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 	}
 
 	bool options = true;
-	RecoveryFileCountAdjust = false;
 
 	while (argc>0) {
 		if (argv[0][0]) {
@@ -156,6 +224,17 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 
 			if (options) {
 				switch (argv[0][1]) {
+				//==============================================================================================================================
+				// Set the PAR2 archive name
+				//==============================================================================================================================
+				case 'a': {
+						if (operation == opCreate) {
+							string str = argv[0];
+							if (str == "-a") { SetParFilename(argv[1]); argc--; argv++; }
+							else             { SetParFilename(str.substr(2)); }
+						}
+					}
+					break;
 				//==============================================================================================================================
 				// Set the block count
 				//==============================================================================================================================
@@ -181,8 +260,8 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 				case 's': {
 						if (operation != opCreate) { cerr << "Cannot specify block size unless creating." << endl; return false; }
 
-						     if (blocksize  > 0) { cerr << "Cannot specify block size twice."                << endl; return false; }
-						else if (blockcount > 0) { cerr << "Cannot specify both block count and block size." << endl; return false; }
+						     if (blocksize >0) { cerr << "Cannot specify block size twice."                << endl; return false; }
+						else if (blockcount>0) { cerr << "Cannot specify both block count and block size." << endl; return false; }
 
 						char *p = &argv[0][2];
 						while (blocksize <= 429496729 && *p && isdigit(*p)) {
@@ -190,7 +269,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 							p++;
 						}
 						if (*p || blocksize == 0) { cerr << "Invalid block size option: " << argv[0] << endl; return false; }
-						if (blocksize & 3)        { cerr << "Block size must be a multiple of 4."    << endl; return false; }
+						if (      blocksize  & 3) { cerr << "Block size must be a multiple of 4."    << endl; return false; }
 					}
 					break;
 
@@ -310,54 +389,101 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					}
 					break;
 
+				//==============================================================================================================================
+				// Verbose
+				//==============================================================================================================================
 				case 'v': {
-						switch (noiselevel) {
-						case nlUnknown: {
-								if (argv[0][2] == 'v')
-									noiselevel = nlDebug;
-								else
-									noiselevel = nlNoisy;
-							}
-							break;
-						case nlNoisy:
-						case nlDebug:
-							noiselevel = nlDebug;
-							break;
-						default:
-							cerr << "Cannot use both -v and -q." << endl;
-							return false;
-							break;
+						char *p = &argv[0][2];
+						while (*p && isdigit(*p)) {
+							VerboseLevel = VerboseLevel * 10 + (*p - '0');
+							p++;
 						}
+						/*
+						switch (noiselevel) {
+							case nlUnknown: {
+									if (argv[0][2] == 'v') { noiselevel = nlDebug; }
+									else                   { noiselevel = nlNoisy; }
+								}
+								break;
+							case nlNoisy:
+							case nlDebug: noiselevel = nlDebug;                                       break;
+							default     : cerr << "Cannot use both -v and -q." << endl; return false; break;
+						}
+						*/
 					}
 					break;
 
+				//==============================================================================================================================
+				// Quiet
+				//==============================================================================================================================
 				case 'q': {
 						switch (noiselevel) {
-						case nlUnknown: {
-								if (argv[0][2] == 'q') { noiselevel = nlSilent; }
-								else                   { noiselevel = nlQuiet ; }
-							}
-							break;
-						case nlQuiet :
-						case nlSilent:
-							noiselevel = nlSilent;
-							break;
-						default:
-							cerr << "Cannot use both -v and -q." << endl;
-							return false;
-							break;
+							case nlUnknown: {
+									if (argv[0][2] == 'q') { noiselevel = nlSilent; }
+									else                   { noiselevel = nlQuiet ; }
+								}
+								break;
+							case nlQuiet :
+							case nlSilent:
+								noiselevel = nlSilent;
+								break;
+							default:
+								cerr << "Cannot use both -v and -q." << endl;
+								return false;
+								break;
 						}
 					}
 					break;
 
-				case '-': { argc--; argv++; options = false; continue; }
+				//==============================================================================================================================
+				// Purge backup/par files after usage
+				//==============================================================================================================================
+				case 'p': {
+						if (operation != opRepair && operation != opVerify) {
+							cerr << "Cannot specify purge unless repairing or verifying." << endl;
+							return false;
+						}
+						purgefiles = true;
+					}
 					break;
+
+				//==============================================================================================================================
+				// Display help
+				//==============================================================================================================================
+				case 'h': {
+						DisplayHelp = true;
+						return false;
+					}
+					break;
+
+				//==============================================================================================================================
+				// Recursive search
+				//==============================================================================================================================
+				case 'R': {
+						if (operation == opCreate) { recursive = true; }
+						else                       { cerr << "Recursive has no impact except on creating." << endl; }
+					}
+					break;
+				//==============================================================================================================================
+				// Others
+				//==============================================================================================================================
+				case '-': { argc--; argv++; options = false; continue; } break;
 
 				default: {
 						cerr << "Invalid option specified: " << argv[0] << endl;
 						return false;
 					}
 				}
+			} else if (parfilename.length() == 0) {
+				string filename = argv[0];
+				string::size_type where;
+				if ((where = filename.find_first_of('*')) != string::npos ||
+				    (where = filename.find_first_of('?')) != string::npos) {
+					cerr << "par2 file must not have a wildcard in it." << endl;
+					return false;
+				}
+
+				SetParFilename(filename);
 			} else {
 				list<string> *filenames = new list<string>;
 
@@ -366,7 +492,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 					string path;
 					string name;
 					DiskFile::SplitFilename(argv[0], path, name);
-					DiskFile::FindFiles(path, name, filenames);
+					DiskFile::FindFiles(filenames, basepath, name, recursive);
 				} else {
 					filenames = new list<string>;
 					filenames->push_back(argv[0]);
@@ -388,10 +514,10 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 								// Get what follows the last '.'
 								string tail = filename.substr(where+1);
 
-								if (0 == stricmp(tail.c_str(), "par2")) {
+								if (0 == _stricmp(tail.c_str(), "par2")) {
 									parfilename = filename;
 									version     = verPar2;
-								} else if (0 == stricmp(tail.c_str(), "par") ||
+								} else if (0 == _stricmp(tail.c_str(), "par") ||
 												 (tail.size() == 3 &&
 												 tolower(tail[0]) == 'p' &&
 												 isdigit(tail[1]) &&
@@ -406,7 +532,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 							// files filename was actually the name of a data file.
 							if (version == verUnknown) {
 								// Check for the existence of a PAR2 of PAR file.
-										 if (DiskFile::FileExists(filename + ".par2")) { version = verPar2; parfilename = filename + ".par2"; }
+								     if (DiskFile::FileExists(filename + ".par2")) { version = verPar2; parfilename = filename + ".par2"; }
 								else if (DiskFile::FileExists(filename + ".PAR2")) { version = verPar2; parfilename = filename + ".PAR2"; }
 								else if (DiskFile::FileExists(filename + ".par" )) { version = verPar1; parfilename = filename + ".par" ; }
 								else if (DiskFile::FileExists(filename + ".PAR" )) { version = verPar1; parfilename = filename + ".PAR" ; }
@@ -421,10 +547,15 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 							}
 						} else {
 							// We are creating a new file
-							version = verPar2;
+							version     = verPar2 ;
 							parfilename = filename;
 						}
 					} else {
+						// Verify that full-filename is not too long
+						if (filename.length()>_MAX_PATH) {
+							cerr << "The source filename is too long (" << filename.length() << ") : \"" << filename << "\"" << endl;
+							return false;
+						} else 
 						// All other files must exist
 						if (!DiskFile::FileExists(filename)) {
 							cerr << "The source file does not exist: " << filename << endl;
@@ -475,7 +606,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 		// If we are creating, the source files must be given.
 		if (extrafiles.size() == 0) {
 			// Does the par filename include the ".par2" on the end?
-			if (parfilename.length() > 5 && 0 == stricmp(parfilename.substr(parfilename.length()-5, 5).c_str(), ".par2")) {
+			if (parfilename.length() > 5 && 0 == _stricmp(parfilename.substr(parfilename.length()-5, 5).c_str(), ".par2")) {
 				// Yes it does.
 				cerr << "You must specify a list of files when creating." << endl;
 				return false;
@@ -503,7 +634,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 		}
 
 		// Strip the ".par2" from the end of the filename of the main PAR2 file.
-		if (parfilename.length() > 5 && 0 == stricmp(parfilename.substr(parfilename.length()-5, 5).c_str(), ".par2")) {
+		if (parfilename.length() > 5 && 0 == _stricmp(parfilename.substr(parfilename.length()-5, 5).c_str(), ".par2")) {
 			parfilename = parfilename.substr(0, parfilename.length()-5);
 		}
 
@@ -554,4 +685,54 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 	memorylimit *= 1048576;
 
 	return true;
+}
+
+void CommandLine::SetParFilename(string filename) {
+	parfilename = DiskFile::GetCanonicalPathname(filename);
+
+	// If we are verifying or repairing, the PAR2 file must already exist
+	if (operation != opCreate) {
+		// Find the last '.' in the filename
+		string::size_type where = filename.find_last_of('.');
+		if (where != string::npos) {
+			// Get what follows the last '.'
+			string tail = filename.substr(where+1);
+
+			if (0 == _stricmp(tail.c_str(), "par2")) {
+				parfilename = filename;
+				version = verPar2;
+			} else if (0 == _stricmp(tail.c_str(), "par") ||
+			           ( tail.size() == 3 &&
+			             tolower(tail[0]) == 'p' &&
+			             isdigit(tail[1]) &&
+			             isdigit(tail[2])
+			           )
+			          ) {
+				parfilename = filename;
+				version = verPar1;
+			}
+		}
+
+		// If we haven't figured out which version of PAR file we
+		// are using from the file extension, then presumable the
+		// files filename was actually the name of a data file.
+		if (version == verUnknown) {
+			// Check for the existence of a PAR2 of PAR file.
+			     if (DiskFile::FileExists(filename + ".par2")) { version = verPar2; parfilename = filename + ".par2"; }
+			else if (DiskFile::FileExists(filename + ".PAR2")) { version = verPar2; parfilename = filename + ".PAR2"; }
+			else if (DiskFile::FileExists(filename + ".par" )) { version = verPar1; parfilename = filename + ".par" ; }
+			else if (DiskFile::FileExists(filename + ".PAR" )) { version = verPar1; parfilename = filename + ".PAR" ; }
+		} else {
+			// Does the specified PAR or PAR2 file exist
+			if (!DiskFile::FileExists(filename)) {
+				CommandLine::ParFileNotFound(filename);
+				version = verNotFound;
+			}
+		}
+	} else {
+		version = verPar2;
+	}
+
+	string dummy;
+	DiskFile::SplitFilename(parfilename, basepath, dummy);
 }

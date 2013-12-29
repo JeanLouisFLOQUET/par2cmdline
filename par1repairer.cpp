@@ -20,11 +20,11 @@
 #include "par2cmdline.h"
 
 #ifdef _MSC_VER
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
+	#ifdef _DEBUG
+		#undef THIS_FILE
+		static char THIS_FILE[]=__FILE__;
+		#define new DEBUG_NEW
+	#endif
 #endif
 
 static u32 smartpar11 = 0x03000101;
@@ -47,6 +47,8 @@ Par1Repairer::Par1Repairer(void) {
 }
 
 Par1Repairer::~Par1Repairer(void) {
+	delete [] (u8*) inputbuffer;
+	delete [] (u8*)outputbuffer;
 	map<u32,DataBlock*>::iterator i = recoveryblocks.begin();
 	while (i != recoveryblocks.end()) {
 		DataBlock *datablock = i->second;
@@ -75,6 +77,9 @@ Par1Repairer::~Par1Repairer(void) {
 Result Par1Repairer::Process(const CommandLine &commandline, bool dorepair) {
 	// How noisy should we be
 	noiselevel = commandline.GetNoiseLevel();
+
+	// Do we want to purge par files on success ?
+	bool purgefiles = commandline.GetPurgeFiles();
 
 	// Get filesnames from the command line
 	string par1filename = commandline.GetParFilename();
@@ -203,6 +208,11 @@ Result Par1Repairer::Process(const CommandLine &commandline, bool dorepair) {
 		}
 	}
 
+	if (purgefiles == true) {
+		RemoveBackupFiles();
+		RemoveParFiles();
+	}
+
 	return eSuccess;
 }
 
@@ -228,6 +238,8 @@ bool Par1Repairer::LoadRecoveryFile(string filename) {
 		DiskFile::SplitFilename(filename, path, name);
 		cout << "Loading \"" << name << "\"." << endl;
 	}
+
+	parlist.push_back(filename);
 
 	bool havevolume = false;
 	u32 volumenumber = 0;
@@ -297,7 +309,7 @@ bool Par1Repairer::LoadRecoveryFile(string filename) {
 					||
 					(fileheader.datasize && (fileheader.dataoffset < sizeof(fileheader) || fileheader.dataoffset + fileheader.datasize > filesize))
 					||
-					(fileheader.datasize && (fileheader.filelistoffset <= fileheader.dataoffset && fileheader.dataoffset < fileheader.filelistoffset+fileheader.filelistsize || fileheader.dataoffset <= fileheader.filelistoffset && fileheader.filelistoffset < fileheader.dataoffset + fileheader.datasize)))
+					(fileheader.datasize && ((fileheader.filelistoffset <= fileheader.dataoffset && fileheader.dataoffset < fileheader.filelistoffset+fileheader.filelistsize) || (fileheader.dataoffset <= fileheader.filelistoffset && fileheader.filelistoffset < fileheader.dataoffset + fileheader.datasize))))
 				break;
 
 			// Check the size of the file list
@@ -458,7 +470,7 @@ bool Par1Repairer::LoadOtherRecoveryFiles(string filename) {
 	// Search for additional PAR files
 	string wildcard = name + ".???";
 	list<string> *files = new list<string>;
-	DiskFile::FindFiles(path, wildcard, files);
+	DiskFile::FindFiles(files, path, wildcard, false);
 
 	for (list<string>::const_iterator s=files->begin(); s!=files->end(); ++s) {
 		string filename = *s;
@@ -471,9 +483,9 @@ bool Par1Repairer::LoadOtherRecoveryFiles(string filename) {
 			// Check the the file extension is the correct form
 			if ((tail[0] == 'P' || tail[0] == 'p') &&
 					(
-						(tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r')
+						((tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r'))
 						||
-						isdigit(tail[1]) && isdigit(tail[2])
+						(isdigit(tail[1]) && isdigit(tail[2]))
 					)) {
 				LoadRecoveryFile(filename);
 			}
@@ -498,9 +510,9 @@ bool Par1Repairer::LoadExtraRecoveryFiles(const list<CommandLine::ExtraFile> &ex
 			// Check the the file extension is the correct form
 			if ((tail[0] == 'P' || tail[0] == 'p') &&
 					(
-						(tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r')
+						((tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r'))
 						||
-						isdigit(tail[1]) && isdigit(tail[2])
+						(isdigit(tail[1]) && isdigit(tail[2]))
 					)) {
 				LoadRecoveryFile(filename);
 			}
@@ -523,47 +535,52 @@ bool Par1Repairer::VerifySourceFiles(void) {
 
 		// Check to see if we have already used this file
 		if (diskfilemap.Find(filename) != 0) {
+			string path;
+			string name;
+			DiskFile::SplitRelativeFilename(filename, path, name);
+
 			// The file has already been used!
-			cerr << "Source file " << filenumber+1 << " is a duplicate." << endl;
-			return false;
-		}
+//			cerr << "Source file " << filenumber+1 << " is a duplicate." << endl; // Original
+			cerr << "Source file " << name         << " is a duplicate." << endl; // Imported
+			finalresult = false;
+			} else {
 
-		DiskFile *diskfile = new DiskFile;
+			DiskFile *diskfile = new DiskFile;
 
-		// Does the target file exist
-		if (diskfile->Open(filename)) {
-			// Yes. Record that fact.
-			sourcefile->SetTargetExists(true);
+			// Does the target file exist
+			if (diskfile->Open(filename)) {
+				// Yes. Record that fact.
+				sourcefile->SetTargetExists(true);
 
-			// Remember that the DiskFile is the target file
-			sourcefile->SetTargetFile(diskfile);
+				// Remember that the DiskFile is the target file
+				sourcefile->SetTargetFile(diskfile);
 
-			// Remember that we have processed this file
-			bool success = diskfilemap.Insert(diskfile);
-			assert(success);
+				// Remember that we have processed this file
+				bool success = diskfilemap.Insert(diskfile);
+				assert(success);
 
-			// Do the actual verification
-			if (!VerifyDataFile(diskfile, sourcefile))
-				finalresult = false;
+				// Do the actual verification
+				if (!VerifyDataFile(diskfile, sourcefile))
+					finalresult = false;
 
-			// We have finished with the file for now
-			diskfile->Close();
+				// We have finished with the file for now
+				diskfile->Close();
 
-			// Find out how much data we have found
-			UpdateVerificationResults();
-		} else {
-			// The file does not exist.
-			delete diskfile;
+				// Find out how much data we have found
+				UpdateVerificationResults();
+			} else {
+				// The file does not exist.
+				delete diskfile;
 
-			if (noiselevel > CommandLine::nlSilent) {
-				string path;
-				string name;
-				DiskFile::SplitFilename(filename, path, name);
+				if (noiselevel > CommandLine::nlSilent) {
+					string path;
+					string name;
+					DiskFile::SplitFilename(filename, path, name);
 
-				cout << "Target: \"" << name << "\" - missing." << endl;
+					cout << "Target: \"" << name << "\" - missing." << endl;
+				}
 			}
 		}
-
 		++sourceiterator;
 		++filenumber;
 	}
@@ -588,9 +605,9 @@ bool Par1Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafil
 			// Check the the file extension is the correct form
 			if ((tail[0] == 'P' || tail[0] == 'p') &&
 					(
-						(tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r')
+						((tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r'))
 						||
-						isdigit(tail[1]) && isdigit(tail[2])
+						(isdigit(tail[1]) && isdigit(tail[2]))
 					)) {
 				skip = true;
 			}
@@ -900,6 +917,9 @@ bool Par1Repairer::RenameTargetFiles(void) {
 			diskfilemap.Remove(targetfile);
 			if (!targetfile->Rename())
 				return false;
+
+			backuplist.push_back(targetfile);
+
 			bool success = diskfilemap.Insert(targetfile);
 			assert(success);
 
@@ -1232,6 +1252,61 @@ bool Par1Repairer::DeleteIncompleteTargetFiles(void) {
 		}
 
 		++sf;
+	}
+
+	return true;
+}
+
+bool Par1Repairer::RemoveBackupFiles(void) {
+	vector<DiskFile*>::iterator bf = backuplist.begin();
+
+	if (noiselevel > CommandLine::nlSilent
+			&& bf != backuplist.end()) {
+		cout << endl << "Purge backup files." << endl;
+	}
+
+	// Iterate through each file in the backuplist
+	while (bf != backuplist.end()) {
+		if (noiselevel > CommandLine::nlSilent) {
+			string name;
+			string path;
+			DiskFile::SplitFilename((*bf)->FileName(), path, name);
+			cout << "Remove \"" << name << "\"." << endl;
+		}
+
+		if ((*bf)->IsOpen())
+			(*bf)->Close();
+		(*bf)->Delete();
+
+		++bf;
+	}
+
+	return true;
+}
+
+bool Par1Repairer::RemoveParFiles(void) {
+	if (noiselevel > CommandLine::nlSilent
+			&& parlist.size() > 0) {
+			cout << endl << "Purge par files." << endl;
+	}
+
+	for (list<string>::const_iterator s=parlist.begin(); s!=parlist.end(); ++s) {
+		DiskFile *diskfile = new DiskFile;
+
+		if (diskfile->Open(*s)) {
+			if (noiselevel > CommandLine::nlSilent) {
+				string name;
+				string path;
+				DiskFile::SplitFilename((*s), path, name);
+				cout << "Remove \"" << name << "\"." << endl;
+			}
+
+			if (diskfile->IsOpen())
+				diskfile->Close();
+			diskfile->Delete();
+		}
+
+		delete diskfile;
 	}
 
 	return true;

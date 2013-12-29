@@ -18,282 +18,266 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #ifndef __PARCMDLINE_H__
-#define __PARCMDLINE_H__
+	#define __PARCMDLINE_H__
 
-#ifdef WIN32
-// Windows includes
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+	#define VERBOSE_LEVEL_HIDE_BANNER            1
+	#define VERBOSE_LEVEL_LOAD_MAIN_PAR_SILENT   2
+	#define VERBOSE_LEVEL_LOAD_MAIN_PAR_COMPACT  4
 
-// System includes
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <io.h>
-#include <fcntl.h>
-#include <assert.h>
+	#ifdef WIN32
+		// Windows includes
+		#define WIN32_LEAN_AND_MEAN
+		#include <windows.h>
 
-#define snprintf _snprintf
-#define stat64 _stat64       //We need to use 64bit structure to support files larger than 2GB
+		// System includes
+		#include <stdio.h>
+		#include <string.h>
+		#include <stdlib.h>
+		#include <ctype.h>
+		#include <sys/types.h>
+		#include <sys/stat.h>
+		#include <io.h>
+		#include <fcntl.h>
+		#include <assert.h>
 
-#define __LITTLE_ENDIAN 1234
-#define __BIG_ENDIAN    4321
-#define __PDP_ENDIAN    3412
+		#define snprintf _snprintf
+		#define stat64 _stat64       //We need to use 64bit structure to support files larger than 2GB
 
-#define __BYTE_ORDER __LITTLE_ENDIAN
+		#define __LITTLE_ENDIAN 1234
+		#define __BIG_ENDIAN    4321
+		#define __PDP_ENDIAN    3412
 
-typedef unsigned char    u8;
-typedef unsigned short   u16;
-typedef unsigned long    u32;
-typedef unsigned __int64 u64;
+		#define __BYTE_ORDER __LITTLE_ENDIAN
 
-#ifndef _SIZE_T_DEFINED
-#  ifdef _WIN64
-typedef unsigned __int64 size_t;
-#  else
-typedef unsigned int     size_t;
-#  endif
-#  define _SIZE_T_DEFINED
-#endif
+		typedef unsigned char    u8;
+		typedef unsigned short   u16;
+		typedef unsigned long    u32;
+		typedef unsigned __int64 u64;
 
+		#ifndef _SIZE_T_DEFINED
+			#ifdef _WIN64
+				typedef unsigned __int64 size_t;
+			#else
+				typedef unsigned int     size_t;
+			#endif
+			#define _SIZE_T_DEFINED
+		#endif
+	#else // ! WIN32
+		#define _MAX_PATH 4095
 
-#else // WIN32
-#ifdef HAVE_CONFIG_H
+		#ifdef HAVE_CONFIG_H
+			#include <config.h>
 
-#include <config.h>
+			#ifdef HAVE_STDLIB_H
+				#include <stdlib.h>
+			#endif
 
-#ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-#endif
+			#ifdef HAVE_STDIO_H
+				#include <stdio.h>
+			#endif
 
-#ifdef HAVE_STDIO_H
-#  include <stdio.h>
-#endif
+			#if HAVE_DIRENT_H
+				#include <dirent.h>
+				#define NAMELEN(dirent) strlen((dirent)->d_name)
+			#else
+				#define dirent direct
+				#define NAMELEN(dirent) (dirent)->d_namelen
+				#if HAVE_SYS_NDIR_H
+					#include <sys/ndir.h>
+				#endif
+				#if HAVE_SYS_DIR_H
+					#include <sys/dir.h>
+				#endif
+				#if HAVE_NDIR_H
+					#include <ndir.h>
+				#endif
+			#endif
 
-#if HAVE_DIRENT_H
-#  include <dirent.h>
-#  define NAMELEN(dirent) strlen((dirent)->d_name)
-#else
-#  define dirent direct
-#  define NAMELEN(dirent) (dirent)->d_namelen
-#  if HAVE_SYS_NDIR_H
-#    include <sys/ndir.h>
-#  endif
-#  if HAVE_SYS_DIR_H
-#    include <sys/dir.h>
-#  endif
-#  if HAVE_NDIR_H
-#    include <ndir.h>
-#  endif
-#endif
+			#if STDC_HEADERS
+				#include <string.h>
+			#else
+				#if !HAVE_STRCHR
+					#define strchr index
+					#define strrchr rindex
+				#endif
+			char *strchr(), *strrchr();
+				#if !HAVE_MEMCPY
+					#define memcpy(d, s, n) bcopy((s), (d), (n))
+					#define memove(d, s, n) bcopy((s), (d), (n))
+				#endif
+			#endif
 
-#if STDC_HEADERS
-#  include <string.h>
-#else
-#  if !HAVE_STRCHR
-#    define strchr index
-#    define strrchr rindex
-#  endif
-char *strchr(), *strrchr();
-#  if !HAVE_MEMCPY
-#    define memcpy(d, s, n) bcopy((s), (d), (n))
-#    define memove(d, s, n) bcopy((s), (d), (n))
-#  endif
-#endif
+			#if HAVE_MEMORY_H
+				#include <memory.h>
+			#endif
 
-#if HAVE_MEMORY_H
-#  include <memory.h>
-#endif
+			#if !HAVE_STRICMP
+				#if HAVE_STRCASECMP
+					#define stricmp strcasecmp
+				#endif
+			#endif
 
-#if !HAVE_STRICMP
-#  if HAVE_STRCASECMP
-#    define stricmp strcasecmp
-#  endif
-#endif
+			#if HAVE_INTTYPES_H
+				#include <inttypes.h>
+			#endif
 
-#if HAVE_INTTYPES_H
-#  include <inttypes.h>
-#endif
+			#if HAVE_STDINT_H
+				#include <stdint.h>
+				typedef uint8_t            u8;
+				typedef uint16_t           u16;
+				typedef uint32_t           u32;
+				typedef uint64_t           u64;
+			#else
+				typedef unsigned char      u8;
+				typedef unsigned short     u16;
+				typedef unsigned int       u32;
+				typedef unsigned long long u64;
+			#endif
 
-#if HAVE_STDINT_H
-#  include <stdint.h>
-typedef uint8_t            u8;
-typedef uint16_t           u16;
-typedef uint32_t           u32;
-typedef uint64_t           u64;
-#else
-typedef unsigned char      u8;
-typedef unsigned short     u16;
-typedef unsigned int       u32;
-typedef unsigned long long u64;
-#endif
+			#if HAVE_SYS_STAT_H
+				#include <sys/stat.h>
+			#endif
 
-#if HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-#endif
+			#if HAVE_SYS_TYPES_H
+				#include <sys/types.h>
+			#endif
 
-#if HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
+			#if HAVE_UNISTD_H
+				#include <unistd.h>
+			#endif
 
-#if HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+			#if HAVE_ENDIAN_H
+				#include <endian.h>
+				#ifndef __LITTLE_ENDIAN
+					#ifdef _LITTLE_ENDIAN
+						#define __LITTLE_ENDIAN _LITTLE_ENDIAN
+						#define __LITTLE_ENDIAN _LITTLE_ENDIAN
+						#define __BIG_ENDIAN _BIG_ENDIAN
+						#define __PDP_ENDIAN _PDP_ENDIAN
+					#else
+						#error <endian.h> does not define __LITTLE_ENDIAN etc.
+					#endif
+				#endif
+			#else
+				#define __LITTLE_ENDIAN 1234
+				#define __BIG_ENDIAN    4321
+				#define __PDP_ENDIAN    3412
+				#if WORDS_BIGENDIAN
+					#define __BYTE_ORDER __BIG_ENDIAN
+				#else
+					#define __BYTE_ORDER __LITTLE_ENDIAN
+				#endif
+			#endif
 
-#define _MAX_PATH 255
+		#else // HAVE_CONFIG_H
+			#include <fcntl.h>
+			#include <stdio.h>
+			#include <unistd.h>
+			#include <string.h>
+			#include <stdlib.h>
+			#include <ctype.h>
+			#include <sys/types.h>
+			#include <sys/stat.h>
+			#include <dirent.h>
+			#include <assert.h>
 
-#if HAVE_ENDIAN_H
-#  include <endian.h>
-#  ifndef __LITTLE_ENDIAN
-#    ifdef _LITTLE_ENDIAN
-#      define __LITTLE_ENDIAN _LITTLE_ENDIAN
-#      define __LITTLE_ENDIAN _LITTLE_ENDIAN
-#      define __BIG_ENDIAN _BIG_ENDIAN
-#      define __PDP_ENDIAN _PDP_ENDIAN
-#    else
-#      error <endian.h> does not define __LITTLE_ENDIAN etc.
-#    endif
-#  endif
-#else
-#  define __LITTLE_ENDIAN 1234
-#  define __BIG_ENDIAN    4321
-#  define __PDP_ENDIAN    3412
-#  if WORDS_BIGENDIAN
-#    define __BYTE_ORDER __BIG_ENDIAN
-#  else
-#    define __BYTE_ORDER __LITTLE_ENDIAN
-#  endif
-#endif
+			#include <errno.h>
 
-#else // HAVE_CONFIG_H
+			#define stricmp strcasecmp
+			#define _stat stat
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <assert.h>
+			typedef   unsigned char        u8;
+			typedef   unsigned short       u16;
+			typedef   unsigned int         u32;
+			typedef   unsigned long long   u64;
 
-#include <errno.h>
+		#endif
+	#endif
 
-#define _MAX_PATH 255
-#define stricmp strcasecmp
-#define _stat stat
+	#ifdef WIN32
+		#define PATHSEP "\\"
+		#define ALTPATHSEP "/"
+	#else
+		#define PATHSEP "/"
+		#define ALTPATHSEP "\\"
+	#endif
 
-typedef   unsigned char        u8;
-typedef   unsigned short       u16;
-typedef   unsigned int         u32;
-typedef   unsigned long long   u64;
+	// Return type of par2cmdline
+	typedef enum Result {
+		eSuccess                     = 0,
+		eRepairPossible              = 1,  // Data files are damaged and there is enough recovery data available to repair them.
+		eRepairNotPossible           = 2,  // Data files are damaged and there is insufficient recovery data available to be able to repair them.
+		eInvalidCommandLineArguments = 3,  // There was something wrong with the command line arguments
+		eInsufficientCriticalData    = 4,  // The PAR2 files did not contain sufficient information about the data files to be able to verify them.
+		eRepairFailed                = 5,  // Repair completed but the data files still appear to be damaged.
+		eFileIOError                 = 6,  // An error occured when accessing files
+		eLogicError                  = 7,  // In internal error occurred
+		eMemoryError                 = 8,  // Out of memory
+	} Result;
 
-#endif
-#endif
+	#define LONGMULTIPLY
 
-#ifdef WIN32
-#define PATHSEP "\\"
-#define ALTPATHSEP "/"
-#else
-#define PATHSEP "/"
-#define ALTPATHSEP "\\"
-#endif
+	// STL includes
+	#include <string>
+	#include <list>
+	#include <vector>
+	#include <map>
+	#include <algorithm>
 
-// Return type of par2cmdline
-typedef enum Result {
-  eSuccess                     = 0,
+	#include <ctype.h>
+	#include <iostream>
+	#include <iomanip>
 
-  eRepairPossible              = 1,  // Data files are damaged and there is
-                                     // enough recovery data available to
-                                     // repair them.
+	#include <cassert>
 
-  eRepairNotPossible           = 2,  // Data files are damaged and there is
-                                     // insufficient recovery data available
-                                     // to be able to repair them.
+	using namespace std;
 
-  eInvalidCommandLineArguments = 3,  // There was something wrong with the
-                                     // command line arguments
+	#ifdef offsetof
+		#undef offsetof
+	#endif
 
-  eInsufficientCriticalData    = 4,  // The PAR2 files did not contain sufficient
-                                     // information about the data files to be able
-                                     // to verify them.
+	#define offsetof(TYPE, MEMBER) ((size_t) ((char*)(&((TYPE *)1)->MEMBER) - (char*)1))
 
-  eRepairFailed                = 5,  // Repair completed but the data files
-                                     // still appear to be damaged.
+	#include "letype.h"
+	// par2cmdline includes
 
+	#include "galois.h"
+	#include "crc.h"
+	#include "md5.h"
+	#include "par2fileformat.h"
+	#include "commandline.h"
+	#include "reedsolomon.h"
 
-  eFileIOError                 = 6,  // An error occured when accessing files
-  eLogicError                  = 7,  // In internal error occurred
-  eMemoryError                 = 8,  // Out of memory
+	#include "diskfile.h"
+	#include "datablock.h"
 
-} Result;
+	#include "criticalpacket.h"
+	#include "par2creatorsourcefile.h"
 
-#define LONGMULTIPLY
+	#include "mainpacket.h"
+	#include "creatorpacket.h"
+	#include "descriptionpacket.h"
+	#include "verificationpacket.h"
+	#include "recoverypacket.h"
 
-// STL includes
-#include <string>
-#include <list>
-#include <vector>
-#include <map>
-#include <algorithm>
+	#include "par2repairersourcefile.h"
 
-#include <ctype.h>
-#include <iostream>
-#include <iomanip>
+	#include "filechecksummer.h"
+	#include "verificationhashtable.h"
 
-#include <cassert>
+	#include "par2creator.h"
+	#include "par2repairer.h"
 
-using namespace std;
+	#include "par1fileformat.h"
+	#include "par1repairersourcefile.h"
+	#include "par1repairer.h"
 
-#ifdef offsetof
-#undef offsetof
-#endif
-#define offsetof(TYPE, MEMBER) ((size_t) ((char*)(&((TYPE *)1)->MEMBER) - (char*)1))
+	// Heap checking
+	#ifdef _MSC_VER
+		#define _CRTDBG_MAP_ALLOC
+	#include <crtdbg.h>
+		#define DEBUG_NEW new(_NORMAL_BLOCK, THIS_FILE, __LINE__)
+	#endif
 
-#include "letype.h"
-// par2cmdline includes
-
-#include "galois.h"
-#include "crc.h"
-#include "md5.h"
-#include "par2fileformat.h"
-#include "commandline.h"
-#include "reedsolomon.h"
-
-#include "diskfile.h"
-#include "datablock.h"
-
-#include "criticalpacket.h"
-#include "par2creatorsourcefile.h"
-
-#include "mainpacket.h"
-#include "creatorpacket.h"
-#include "descriptionpacket.h"
-#include "verificationpacket.h"
-#include "recoverypacket.h"
-
-#include "par2repairersourcefile.h"
-
-#include "filechecksummer.h"
-#include "verificationhashtable.h"
-
-#include "par2creator.h"
-#include "par2repairer.h"
-
-#include "par1fileformat.h"
-#include "par1repairersourcefile.h"
-#include "par1repairer.h"
-
-// Heap checking
-#ifdef _MSC_VER
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-#define DEBUG_NEW new(_NORMAL_BLOCK, THIS_FILE, __LINE__)
-#endif
-
+	static void ParFileNotFound(void);
 #endif // __PARCMDLINE_H__
-

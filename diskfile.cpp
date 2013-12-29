@@ -27,6 +27,11 @@
 	#endif
 #endif
 
+#if defined(__FreeBSD_kernel__)
+	#include <sys/disk.h>
+	#define BLKGETSIZE64 DIOCGMEDIASIZE
+#endif
+
 
 #ifdef WIN32
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,9 +296,16 @@
 	//==============================================================================================================================================================
 	// Find Files
 	//==============================================================================================================================================================
-	bool DiskFile::FindFiles(string path, string wildcard, list<string>* filenames) {
+	bool DiskFile::FindFiles(list<string>* filenames, string path, string wildcard, bool recursive) {
 		list<string> *matches = new list<string>;
-		string ThisSearchPath = path + wildcard;   //Create the local path (keep unchanged original path & wildcard)
+
+		// Ensure there is a '/' at the end (add one if necessary)
+		if (*path.rbegin() != '\\') {
+			path += '\\';
+		}
+
+		//Create the local path (keep unchanged original path & wildcard)
+		string ThisSearchPath = path + wildcard;
 
 		WIN32_FIND_DATA fd;
 		HANDLE h = ::FindFirstFile(ThisSearchPath.c_str(), &fd);
@@ -303,11 +315,11 @@
 				if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
 					filenames->push_back(path + fd.cFileName);
 
-				//This is a directory (FILE_ATTRIBUTE_DIRECTORY = 0x10 = 16)
+				//This is a directory (FILE_ATTRIBUTE_DIRECTORY = 0x10 = 16). Scan recursively if allowed
 				} else if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)!=0) {
-					if (fd.cFileName[0]!='.') {
+					if ((fd.cFileName[0]!='.') && recursive ) {
 						string NewSearchPath = path + fd.cFileName + "\\";
-						DiskFile::FindFiles(NewSearchPath, wildcard, filenames);
+						DiskFile::FindFiles(filenames, NewSearchPath, wildcard, recursive);
 					}
 				}
 			} while (::FindNextFile(h, &fd));
@@ -413,7 +425,7 @@
 	}
 
 	//==============================================================================================================================================================
-	// Open the file
+	// Open a file
 	//==============================================================================================================================================================
 	bool DiskFile::Open(string _filename, u64 _filesize) {
 		assert(file == 0);
@@ -434,7 +446,9 @@
 		return true;
 	}
 
+	//==============================================================================================================================================================
 	// Read some data from disk
+	//==============================================================================================================================================================
 	bool DiskFile::Read(u64 _offset, void *buffer, size_t length) {
 		assert(file != 0);
 
@@ -451,6 +465,9 @@
 		return true;
 	}
 
+	//==============================================================================================================================================================
+	// Close a file
+	//==============================================================================================================================================================
 	void DiskFile::Close(void) {
 		if (file != 0) {
 			fclose(file);
@@ -458,7 +475,9 @@
 		}
 	}
 
+	//==============================================================================================================================================================
 	// Attempt to get the full pathname of the file
+	//==============================================================================================================================================================
 	string DiskFile::GetCanonicalPathname(string filename) {
 		// Is the supplied path already an absolute one
 		if (filename.size() == 0 || filename[0] == '/')
@@ -508,13 +527,16 @@
 		return result;
 }
 
-	list<string>* DiskFile::FindFiles(string path, string wildcard) {
+	list<string>* DiskFile::FindFiles(string path, string wildcard, bool recursive) {
 		list<string> *matches = new list<string>;
+
+		// Ensure there is a '/' at the end (add one if necessary)
+		if (*path.rbegin() != '/') { path += '/'; }
 
 		string::size_type where;
 
 		if ((where = wildcard.find_first_of('*')) != string::npos ||
-				(where = wildcard.find_first_of('?')) != string::npos) {
+		    (where = wildcard.find_first_of('?')) != string::npos) {
 			string front = wildcard.substr(0, where);
 			bool multiple = wildcard[where] == '*';
 			string back = wildcard.substr(where+1);
@@ -593,8 +615,6 @@ bool DiskFile::Delete(void) {
 	}
 }
 
-
-
 //string DiskFile::GetPathFromFilename(string filename)
 //{
 //  string::size_type where;
@@ -623,6 +643,17 @@ void DiskFile::SplitFilename(string filename, string &path, string &name) {
 	}
 }
 
+//==============================================================================================================================================================
+// Split Relative Filename
+//==============================================================================================================================================================
+void DiskFile::SplitRelativeFilename(string filename, string basepath, string &name) {
+	name = filename;
+	name.erase(0, basepath.length());
+}
+
+//==============================================================================================================================================================
+// Check if a file exists
+//==============================================================================================================================================================
 bool DiskFile::FileExists(string filename) {
 	struct stat st;
 	return ((0 == stat(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG)));
@@ -633,14 +664,6 @@ bool DiskFile::FileExists(string filename) {
 //==============================================================================================================================================================
 u64 DiskFile::GetFileSize(string filename) {
 	struct stat64 st;
-	u64 result;
-
-	result = _stat64(filename.c_str(), &st);
-//	if (st.st_size<0) {
-//		cerr << "File '" << filename << "' returned a negative size (" << st.st_size << ")." << endl;
-//		return false;
-//	}
-
 	if ((0 == stat64(filename.c_str(), &st)) && (0 != (st.st_mode & S_IFREG))) {
 		return st.st_size;
 	} else {
@@ -659,6 +682,7 @@ string DiskFile::TranslateFilename(string filename) {
 		unsigned char ch = *p;
 
 		bool ok = true;
+		// Characters '/' and '\' are now allowed (for sub-directory search)
 		#ifdef WIN32
 			if (ch < 32) {
 				ok = false;
@@ -666,12 +690,10 @@ string DiskFile::TranslateFilename(string filename) {
 				switch (ch) {
 					case '"' :
 					case '*' :
-					case '/' :
 					case ':' :
 					case '<' :
 					case '>' :
 					case '?' :
-//					case '\\':      // This character is now allowed (for sub-directory search)
 					case '|' :
 						ok = false;
 				}
@@ -679,12 +701,14 @@ string DiskFile::TranslateFilename(string filename) {
 		#else
 			if (ch < 32) {
 				ok = false;
-			} else {
-				switch (ch) {
-					case '/':
-						ok = false;
-				}
 			}
+		#endif
+
+		// replace unix / to windows \ and vice-versa
+		#ifdef WIN32
+			if (ch == '/') { ch = '\\'; }
+		#else
+			if (ch == '\\') { ch = '/'; }
 		#endif
 
 		if (ok) {
@@ -710,7 +734,11 @@ bool DiskFile::Rename(void) {
 		if (length < 0) {
 			cerr << filename << " cannot be renamed." << endl;
 			return false;
+		} else if (length > _MAX_PATH) {
+			cerr << filename << " pathlength is more than " << _MAX_PATH << "." << endl;
+			return false;
 		}
+
 		newname[length] = 0;
 	} while (stat(newname, &st) == 0);
 
@@ -739,12 +767,12 @@ string DiskFile::ErrorMessage(DWORD error) {
 
 	LPVOID lpMsgBuf;
 	if (::FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-											 NULL,
-											 error,
-											 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-											 (LPSTR)&lpMsgBuf,
-											 0,
-											 NULL)) {
+	                     NULL,
+	                     error,
+	                     MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+	                     (LPSTR)&lpMsgBuf,
+	                     0,
+	                     NULL)) {
 		result = (char*)lpMsgBuf;
 		LocalFree(lpMsgBuf);
 	} else {

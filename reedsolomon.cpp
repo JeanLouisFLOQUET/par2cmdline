@@ -40,7 +40,7 @@ u32 gcd(u32 a, u32 b) {
 	}
 }
 
-bool ReedSolomon<Galois8>::SetInput(const vector<bool> &present) {
+template <> bool ReedSolomon<Galois8>::SetInput(const vector<bool> &present) {
 	inputcount = (u32)present.size();
 
 	datapresentindex = new u32[inputcount];
@@ -64,7 +64,7 @@ bool ReedSolomon<Galois8>::SetInput(const vector<bool> &present) {
 	return true;
 }
 
-bool ReedSolomon<Galois8>::SetInput(u32 count) {
+template <> bool ReedSolomon<Galois8>::SetInput(u32 count) {
 	inputcount = count;
 
 	datapresentindex = new u32[inputcount];
@@ -83,89 +83,76 @@ bool ReedSolomon<Galois8>::SetInput(u32 count) {
 	return true;
 }
 
-bool ReedSolomon<Galois8>::Process(size_t size, u32 inputindex, const void *inputbuffer, u32 outputindex, void *outputbuffer) {
-	// Look up the appropriate element in the RS matrix
-	Galois8 factor = leftmatrix[outputindex * (datapresent + datamissing) + inputindex];
+template <> bool ReedSolomon<Galois8>::InternalProcess(const Galois8 &factor, size_t size, const void *inputbuffer, void *outputbuffer) {
+	#ifdef LONGMULTIPLY
+		// The 8-bit long multiplication tables
+		Galois8 *table = glmt->tables;
 
-	// Do nothing if the factor happens to be 0
-	if (factor == 0)
-		return eSuccess;
+		// Split the factor into Low and High bytes
+		unsigned int fl = (factor >> 0) & 0xff;
 
-#ifdef LONGMULTIPLY
-	// The 8-bit long multiplication tables
-	Galois8 *table = glmt->tables;
+		// Get the four separate multiplication tables
+		Galois8 *LL = &table[(0*256 + fl) * 256 + 0]; // factor.low  * source.low
 
-	// Split the factor into Low and High bytes
-	unsigned int fl = (factor >> 0) & 0xff;
+		// Combine the four multiplication tables into two
+		unsigned int L[256];
 
-	// Get the four separate multiplication tables
-	Galois8 *LL = &table[(0*256 + fl) * 256 + 0]; // factor.low  * source.low
+		unsigned int *pL = &L[0];
 
-	// Combine the four multiplication tables into two
-	unsigned int L[256];
+		for (unsigned int i=0; i<256; i++) {
+			*pL = *LL;
 
-	unsigned int *pL = &L[0];
+			pL++;
+			LL++;
+		}
 
-	for (unsigned int i=0; i<256; i++) {
-		*pL = *LL;
-
-		pL++;
-		LL++;
-	}
-
-	// Treat the buffers as arrays of 32-bit unsigned ints.
-	u32 *src4 = (u32 *)inputbuffer;
-	u32 *end4 = (u32 *)&((u8*)inputbuffer)[size & ~3];
-	u32 *dst4 = (u32 *)outputbuffer;
-
-	// Process the data
-	while (src4 < end4) {
-		u32 s = *src4++;
-
-		// Use the two lookup tables computed earlier
-		*dst4++ ^= (L[(s >> 0) & 0xff]      )
-						^  (L[(s >> 8) & 0xff] << 8 )
-						^  (L[(s >> 16)& 0xff] << 16)
-						^  (L[(s >> 24)& 0xff] << 24);
-	}
-
-	// Process any left over bytes at the end of the buffer
-	if (size & 3) {
-		u8 *src1 = &((u8*)inputbuffer)[size & ~3];
-		u8 *end1 = &((u8*)inputbuffer)[size];
-		u8 *dst1 = &((u8*)outputbuffer)[size & ~3];
+		// Treat the buffers as arrays of 32-bit unsigned ints.
+		u32 *src4 = (u32 *)inputbuffer;
+		u32 *end4 = (u32 *)&((u8*)inputbuffer)[size & ~3];
+		u32 *dst4 = (u32 *)outputbuffer;
 
 		// Process the data
-		while (src1 < end1) {
-			u8 s = *src1++;
-			*dst1++ ^= L[s];
+		while (src4 < end4) {
+			u32 s = *src4++;
+
+			// Use the two lookup tables computed earlier
+			*dst4++ ^= (L[(s >> 0) & 0xff]      )
+			        ^  (L[(s >> 8) & 0xff] << 8 )
+			        ^  (L[(s >> 16)& 0xff] << 16)
+			        ^  (L[(s >> 24)& 0xff] << 24);
 		}
-	}
-#else
-	// Treat the buffers as arrays of 16-bit Galois values.
 
-	Galois8 *src = (Galois8 *)inputbuffer;
-	Galois8 *end = (Galois8 *)&((u8*)inputbuffer)[size];
-	Galois8 *dst = (Galois8 *)outputbuffer;
+		// Process any left over bytes at the end of the buffer
+		if (size & 3) {
+			u8 *src1 = &((u8*) inputbuffer)[size & ~3];
+			u8 *end1 = &((u8*) inputbuffer)[size     ];
+			u8 *dst1 = &((u8*)outputbuffer)[size & ~3];
 
-	// Process the data
-	while (src < end) {
-		*dst++ += *src++ * factor;
-	}
-#endif
+			// Process the data
+			while (src1 < end1) {
+				u8 s = *src1++;
+				*dst1++ ^= L[s];
+			}
+		}
+	#else
+		// Treat the buffers as arrays of 16-bit Galois values.
+		Galois8 *src = (Galois8 *)        inputbuffer       ;
+		Galois8 *end = (Galois8 *)&((u8*) inputbuffer)[size];
+		Galois8 *dst = (Galois8 *)       outputbuffer       ;
+
+		// Process the data
+		while (src < end) {
+			*dst++ += *src++ * factor;
+		}
+	#endif
 
 	return eSuccess;
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 // Set which of the source files are present and which are missing
 // and compute the base values to use for the vandermonde matrix.
-bool ReedSolomon<Galois16>::SetInput(const vector<bool> &present) {
+template <> bool ReedSolomon<Galois16>::SetInput(const vector<bool> &present) {
 	inputcount = (u32)present.size();
 
 	datapresentindex = new u32[inputcount];
@@ -202,7 +189,7 @@ bool ReedSolomon<Galois16>::SetInput(const vector<bool> &present) {
 
 // Record that the specified number of source files are all present
 // and compute the base values to use for the vandermonde matrix.
-bool ReedSolomon<Galois16>::SetInput(u32 count) {
+template <> bool ReedSolomon<Galois16>::SetInput(u32 count) {
 	inputcount = count;
 
 	datapresentindex = new u32[inputcount];
@@ -232,14 +219,7 @@ bool ReedSolomon<Galois16>::SetInput(u32 count) {
 	return true;
 }
 
-bool ReedSolomon<Galois16>::Process(size_t size, u32 inputindex, const void *inputbuffer, u32 outputindex, void *outputbuffer) {
-	// Look up the appropriate element in the RS matrix
-
-	Galois16 factor = leftmatrix[outputindex * (datapresent + datamissing) + inputindex];
-	// Do nothing if the factor happens to be 0
-	if (factor == 0)
-		return eSuccess;
-
+template<> bool ReedSolomon<Galois16>::InternalProcess(const Galois16 &factor, size_t size, const void *inputbuffer, void *outputbuffer) {
 #ifdef LONGMULTIPLY
 	// The 8-bit long multiplication tables
 	Galois16 *table = glmt->tables;
@@ -329,4 +309,3 @@ bool ReedSolomon<Galois16>::Process(size_t size, u32 inputindex, const void *inp
 
 	return eSuccess;
 }
-

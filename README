@@ -308,13 +308,6 @@ need "test.mpg.vol01+02.par2" and "test.mpg.vol07+08.par". You might of course
 choose to fetch "test.mpg.vol15+16.par2" instead (in which case you would have
 an extra 6 recovery blocks which would not be used for the repair).
 
-NOTES
-
-This version of par2cmdline does not support recording path information for
-files. Whilst you can create recovery files for files from multiple locations,
-it will expect all files to be in the current directory when verifying and
-repairing. This limitation will be corrected in an update.
-
 REED SOLOMON CODING
 
 PAR2 uses Reed Solomon Coding to perform its calculations. For details of this

@@ -18,130 +18,124 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #ifndef __MD5_H__
-#define __MD5_H__
+	#define __MD5_H__
 
-// This file defines the MD5Hash and MD5Context objects which are used
-// to compute and manipulate the MD5 Hash values for a block of data.
+	#ifdef WIN32
+		#pragma pack(push, 1)
+		#define PACKED
+	#else
+		#define PACKED __attribute__ ((packed))
+	#endif
 
-//  Usage:
-//
-//  MD5Context context;
-//  context.Update(buffer, length);
-//
-//  MD5Hash hash;
-//  context.Final(hash);
+	// This file defines the MD5Hash and MD5Context objects which are used
+	// to compute and manipulate the MD5 Hash values for a block of data.
+	//  Usage:
+	//
+	//  MD5Context context;
+	//  context.Update(buffer, length);
+	//
+	//  MD5Hash hash;
+	//  context.Final(hash);
 
 
 
-// MD5 Hash value
+	// MD5 Hash value
+	struct MD5Hash;
+	ostream& operator<<(ostream &s, const MD5Hash &hash);
 
-class MD5Hash {
-public:
-  // Constructor does not initialise the value
-  MD5Hash(void) {};
+	struct MD5Hash {
+		// Comparison operators
+		bool operator==(const MD5Hash &other) const;
+		bool operator!=(const MD5Hash &other) const;
 
-  // Comparison operators
-  bool operator==(const MD5Hash &other) const;
-  bool operator!=(const MD5Hash &other) const;
+		bool operator<(const MD5Hash &other) const;
+		bool operator>=(const MD5Hash &other) const;
+		bool operator>(const MD5Hash &other) const;
+		bool operator<=(const MD5Hash &other) const;
 
-  bool operator<(const MD5Hash &other) const;
-  bool operator>=(const MD5Hash &other) const;
-  bool operator>(const MD5Hash &other) const;
-  bool operator<=(const MD5Hash &other) const;
+		// Convert value to hex
+		friend ostream& operator<<(ostream &s, const MD5Hash &hash);
+		string print(void) const;
 
-  // Convert value to hex
-  friend ostream& operator<<(ostream &s, const MD5Hash &hash);
-  string print(void) const;
+		u8 hash[16]; // 16 byte MD5 Hash value
+	} PACKED;
 
-  // Copy and assignment
-  MD5Hash(const MD5Hash &other);
-  MD5Hash& operator=(const MD5Hash &other);
+	// Intermediate computation state
 
-public:
-  u8 hash[16]; // 16 byte MD5 Hash value
-};
+	class MD5State {
+		public:
+			MD5State(void);
+			void Reset(void);
 
-// Intermediate computation state
+		public:
+			void UpdateState(const u32 (&block)[16]);
 
-class MD5State {
-public:
-  MD5State(void);
-  void Reset(void);
+		protected:
+			u32 state[4]; // 16 byte MD5 computation state
+	};
 
-public:
-  void UpdateState(const u32 (&block)[16]);
+	// MD5 computation context with 64 byte buffer
 
-protected:
-  u32 state[4]; // 16 byte MD5 computation state
-};
+	class MD5Context : public MD5State {
+		public:
+			MD5Context(void);
+			~MD5Context(void) {};
+			void Reset(void);
 
-// MD5 computation context with 64 byte buffer
+			// Process data from a buffer
+			void Update(const void *buffer, size_t length);
 
-class MD5Context : public MD5State {
-public:
-  MD5Context(void);
-  ~MD5Context(void) {};
-  void Reset(void);
+			// Process 0 bytes
+			void Update(size_t length);
 
-  // Process data from a buffer
-  void Update(const void *buffer, size_t length);
+			// Compute the final hash value
+			void Final(MD5Hash &output);
 
-  // Process 0 bytes
-  void Update(size_t length);
+			// Get the Hash value and the total number of bytes processed.
+			MD5Hash Hash(void) const;
+			u64 Bytes(void) const {return bytes;}
 
-  // Compute the final hash value
-  void Final(MD5Hash &output);
+			friend ostream& operator<<(ostream &s, const MD5Context &context);
+			string print(void) const;
 
-  // Get the Hash value and the total number of bytes processed.
-  MD5Hash Hash(void) const;
-  u64 Bytes(void) const {return bytes;}
+		protected:
+			enum {buffersize = 64};
+			unsigned char block[buffersize];
+			size_t used;
 
-  friend ostream& operator<<(ostream &s, const MD5Context &context);
-  string print(void) const;
+			u64 bytes;
+	};
 
-protected:
-  enum {buffersize = 64};
-  unsigned char block[buffersize];
-  size_t used;
+	// Compare hash values
 
-  u64 bytes;
-};
+	inline bool MD5Hash::operator==(const MD5Hash &other) const {
+		return (0==memcmp(&hash, &other.hash, sizeof(hash)));
+	}
+	inline bool MD5Hash::operator!=(const MD5Hash &other) const {
+		return !operator==(other);
+	}
 
-// Compare hash values
+	inline bool MD5Hash::operator<(const MD5Hash &other) const {
+		size_t index = 15;
+		while (index > 0 && hash[index] == other.hash[index]) {
+			index--;
+		}
 
-inline bool MD5Hash::operator==(const MD5Hash &other) const {
-  return (0==memcmp(&hash, &other.hash, sizeof(hash)));
-}
-inline bool MD5Hash::operator!=(const MD5Hash &other) const {
-  return !operator==(other);
-}
+		return hash[index] < other.hash[index];
+	}
+	inline bool MD5Hash::operator>=(const MD5Hash &other) const {
+		return !operator<(other);
+	}
+	inline bool MD5Hash::operator>(const MD5Hash &other) const {
+		return other.operator<(*this);
+	}
+	inline bool MD5Hash::operator<=(const MD5Hash &other) const {
+		return !other.operator<(*this);
+	}
 
-inline bool MD5Hash::operator<(const MD5Hash &other) const {
-  size_t index = 15;
-  while (index > 0 && hash[index] == other.hash[index]) {
-    index--;
-  }
-
-  return hash[index] < other.hash[index];
-}
-inline bool MD5Hash::operator>=(const MD5Hash &other) const {
-  return !operator<(other);
-}
-inline bool MD5Hash::operator>(const MD5Hash &other) const {
-  return other.operator<(*this);
-}
-inline bool MD5Hash::operator<=(const MD5Hash &other) const {
-  return !other.operator<(*this);
-}
-
-inline MD5Hash::MD5Hash(const MD5Hash &other) {
-  memcpy(&hash, &other.hash, sizeof(hash));
-}
-
-inline MD5Hash& MD5Hash::operator=(const MD5Hash &other) {
-  memcpy(&hash, &other.hash, sizeof(hash));
-
-  return *this;
-}
+	#ifdef WIN32
+		#pragma pack(pop)
+	#endif
+	#undef PACKED
 
 #endif // __MD5_H__

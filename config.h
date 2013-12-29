@@ -80,13 +80,13 @@
 #define HAVE__BOOL 1
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "peterbclements@users.sourceforge.net"
+#define PACKAGE_BUGREPORT "jese.jlf@gmail.com"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "par2cmdline"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.52"
+#define PACKAGE_VERSION "0.53"
 
 /* Define to the full name and version of this package. */
 #define PACKAGE_STRING PACKAGE_NAME " " PACKAGE_VERSION

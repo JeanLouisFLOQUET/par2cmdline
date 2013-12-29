@@ -18,158 +18,152 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #ifndef __PAR2REPAIRER_H__
-#define __PAR2REPAIRER_H__
+	#define __PAR2REPAIRER_H__
 
-class Par2Repairer {
-public:
-  Par2Repairer(void);
-  ~Par2Repairer(void);
+	class Par2Repairer {
+		public:
+			 Par2Repairer(void);
+			~Par2Repairer(void);
 
-  Result Process(const CommandLine &commandline, bool dorepair);
+			Result Process(const CommandLine &commandline, bool dorepair);
 
-protected:
-  // Steps in verifying and repairing files:
+		protected:
+			// Steps in verifying and repairing files:
+			void DisplayLoad              (string name, u32 VerboseLevel, u32 newfraction, u32 packets, u32 recoverypackets);
+			bool LoadPacketsFromFile      (string filename                                      ); // Load packets from the specified file
+			bool LoadRecoveryPacket       (DiskFile *diskfile, u64 offset, PACKET_HEADER &header); // Finish loading a recovery packet
+			bool LoadDescriptionPacket    (DiskFile *diskfile, u64 offset, PACKET_HEADER &header); // Finish loading a file description packet
+			bool LoadVerificationPacket   (DiskFile *diskfile, u64 offset, PACKET_HEADER &header); // Finish loading a file verification packet
+			bool LoadMainPacket           (DiskFile *diskfile, u64 offset, PACKET_HEADER &header); // Finish loading the main packet
+			bool LoadCreatorPacket        (DiskFile *diskfile, u64 offset, PACKET_HEADER &header); // Finish loading the creator packet
+			bool LoadPacketsFromOtherFiles(string filename                                      ); // Load packets from other PAR2 files with names based on the original PAR2 file
+			bool LoadPacketsFromExtraFiles(const list<CommandLine::ExtraFile> &extrafiles); // Load packets from any other PAR2 files whose names are given on the command line
+			bool CheckPacketConsistency   (void); // Check that the packets are consistent and discard any that are not
+			bool CreateSourceFileList     (void); // Use the information in the main packet to get the source files into the correct order and determine their filenames
 
-  // Load packets from the specified file
-  bool LoadPacketsFromFile(string filename);
-  // Finish loading a recovery packet
-  bool LoadRecoveryPacket(DiskFile *diskfile, u64 offset, PACKET_HEADER &header);
-  // Finish loading a file description packet
-  bool LoadDescriptionPacket(DiskFile *diskfile, u64 offset, PACKET_HEADER &header);
-  // Finish loading a file verification packet
-  bool LoadVerificationPacket(DiskFile *diskfile, u64 offset, PACKET_HEADER &header);
-  // Finish loading the main packet
-  bool LoadMainPacket(DiskFile *diskfile, u64 offset, PACKET_HEADER &header);
-  // Finish loading the creator packet
-  bool LoadCreatorPacket(DiskFile *diskfile, u64 offset, PACKET_HEADER &header);
+			// Determine the total number of DataBlocks for the recoverable source files
+			// The allocate the DataBlocks and assign them to each source file
+			bool AllocateSourceBlocks(void);
 
-  // Load packets from other PAR2 files with names based on the original PAR2 file
-  bool LoadPacketsFromOtherFiles(string filename);
+			// Create a verification hash table for all files for which we have not
+			// found a complete version of the file and for which we have
+			// a verification packet
+			bool PrepareVerificationHashTable(void);
 
-  // Load packets from any other PAR2 files whose names are given on the command line
-  bool LoadPacketsFromExtraFiles(const list<CommandLine::ExtraFile> &extrafiles);
+			// Compute the table for the sliding CRC computation
+			bool ComputeWindowTable(void);
 
-  // Check that the packets are consistent and discard any that are not
-  bool CheckPacketConsistency(void);
+			// Attempt to verify all of the source files
+			bool VerifySourceFiles(string basepath);
 
-  // Use the information in the main packet to get the source files
-  // into the correct order and determine their filenames
-  bool CreateSourceFileList(void);
+			// Scan any extra files specified on the command line
+			bool VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafiles, string basepath);
 
-  // Determine the total number of DataBlocks for the recoverable source files
-  // The allocate the DataBlocks and assign them to each source file
-  bool AllocateSourceBlocks(void);
+			// Attempt to match the data in the DiskFile with the source file
+			bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile, string basepath);
 
-  // Create a verification hash table for all files for which we have not
-  // found a complete version of the file and for which we have
-  // a verification packet
-  bool PrepareVerificationHashTable(void);
+			// Perform a sliding window scan of the DiskFile looking for blocks of data that
+			// might belong to any of the source files (for which a verification packet was
+			// available). If a block of data might be from more than one source file, prefer
+			// the one specified by the "sourcefile" parameter. If the first data block
+			// found is for a different source file then "sourcefile" is changed accordingly.
+			bool ScanDataFile( DiskFile                *diskfile    // [in]     The file being scanned
+			                 , string                  basepath     // [in]
+			                 , Par2RepairerSourceFile* &sourcefile  // [in/out] The source file matched
+			                 , MatchType               &matchtype   // [out]    The type of match
+			                 , MD5Hash                 &hashfull    // [out]    The full hash of the file
+			                 , MD5Hash                 &hash16k     // [out]    The hash of the first 16k
+			                 , u32                     &count       // [out]    The number of blocks found
+			                 );
 
-  // Compute the table for the sliding CRC computation
-  bool ComputeWindowTable(void);
+			// Find out how much data we have found
+			void UpdateVerificationResults(void);
 
-  // Attempt to verify all of the source files
-  bool VerifySourceFiles(void);
+			// Check the verification results and report the results
+			bool CheckVerificationResults(void);
 
-  // Scan any extra files specified on the command line
-  bool VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafiles);
+			// Rename any damaged or missnamed target files.
+			bool RenameTargetFiles(void);
 
-  // Attempt to match the data in the DiskFile with the source file
-  bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile);
+			// Work out which files are being repaired, create them, and allocate
+			// target DataBlocks to them, and remember them for later verification.
+			bool CreateTargetFiles(void);
 
-  // Perform a sliding window scan of the DiskFile looking for blocks of data that
-  // might belong to any of the source files (for which a verification packet was
-  // available). If a block of data might be from more than one source file, prefer
-  // the one specified by the "sourcefile" parameter. If the first data block
-  // found is for a different source file then "sourcefile" is changed accordingly.
-  bool ScanDataFile(DiskFile                *diskfile,   // [in]     The file being scanned
-                    Par2RepairerSourceFile* &sourcefile, // [in/out] The source file matched
-                    MatchType               &matchtype,  // [out]    The type of match
-                    MD5Hash                 &hashfull,   // [out]    The full hash of the file
-                    MD5Hash                 &hash16k,    // [out]    The hash of the first 16k
-                    u32                     &count);     // [out]    The number of blocks found
+			// Work out which data blocks are available, which need to be copied
+			// directly to the output, and which need to be recreated, and compute
+			// the appropriate Reed Solomon matrix.
+			bool ComputeRSmatrix(void);
 
-  // Find out how much data we have found
-  void UpdateVerificationResults(void);
+			// Allocate memory buffers for reading and writing data to disk.
+			bool AllocateBuffers(size_t memorylimit);
 
-  // Check the verification results and report the results
-  bool CheckVerificationResults(void);
+			// Read source data, process it through the RS matrix and write it to disk.
+			bool ProcessData(u64 blockoffset, size_t blocklength);
 
-  // Rename any damaged or missnamed target files.
-  bool RenameTargetFiles(void);
+			// Verify that all of the reconstructed target files are now correct
+			bool VerifyTargetFiles(string basepath);
 
-  // Work out which files are being repaired, create them, and allocate
-  // target DataBlocks to them, and remember them for later verification.
-  bool CreateTargetFiles(void);
+			// Delete all of the partly reconstructed files
+			bool DeleteIncompleteTargetFiles(void);
 
-  // Work out which data blocks are available, which need to be copied
-  // directly to the output, and which need to be recreated, and compute
-  // the appropriate Reed Solomon matrix.
-  bool ComputeRSmatrix(void);
+			// list the files needing verification
+			bool RemoveBackupFiles(void);
+			bool RemoveParFiles(void);
 
-  // Allocate memory buffers for reading and writing data to disk.
-  bool AllocateBuffers(size_t memorylimit);
+		protected:
+			CommandLine::NoiseLevel              noiselevel             ; // OnScreen display
+			u32                                  VerboseLevel           ;
 
-  // Read source data, process it through the RS matrix and write it to disk.
-  bool ProcessData(u64 blockoffset, size_t blocklength);
+			string                               searchpath             ; // Where to find files on disk
 
-  // Verify that all of the reconstructed target files are now correct
-  bool VerifyTargetFiles(void);
+			bool                                 firstpacket            ; // Whether or not a valid packet has been found.
+			MD5Hash                              setid                  ; // The SetId extracted from the first packet.
 
-  // Delete all of the partly reconstructed files
-  bool DeleteIncompleteTargetFiles(void);
+			map<u32, RecoveryPacket*>            recoverypacketmap      ; // One recovery packet for each exponent value.
+			MainPacket                          *mainpacket             ; // One copy of the main packet.
+			CreatorPacket                       *creatorpacket          ; // One copy of the creator packet.
 
-protected:
-  CommandLine::NoiseLevel   noiselevel;              // OnScreen display
+			DiskFileMap                          diskFileMap;
 
-  string                    searchpath;              // Where to find files on disk
+			map<MD5Hash,Par2RepairerSourceFile*> sourcefilemap          ; // Map from FileId to SourceFile
+			vector<Par2RepairerSourceFile*>      sourcefiles            ; // The source files
+			vector<Par2RepairerSourceFile*>      verifylist             ; // Those source files that are being repaired
+			vector<DiskFile*>                    backuplist             ; // Those source files backups
+			list<string>                         par2list               ; // list of par2 files
 
-  bool                      firstpacket;             // Whether or not a valid packet has been found.
-  MD5Hash                   setid;                   // The SetId extracted from the first packet.
+			u64                                  blocksize              ; // The block size.
+			u64                                  chunksize              ; // How much of a block can be processed.
+			u32                                  sourceblockcount       ; // The total number of blocks
+			u32                                  availableblockcount    ; // How many undamaged blocks have been found
+			u32                                  missingblockcount      ; // How many blocks are missing
 
-  map<u32, RecoveryPacket*> recoverypacketmap;       // One recovery packet for each exponent value.
-  MainPacket               *mainpacket;              // One copy of the main packet.
-  CreatorPacket            *creatorpacket;           // One copy of the creator packet.
+			bool                                 blocksallocated        ; // Whether or not the DataBlocks have been allocated
+			vector<DataBlock>                    sourceblocks           ; // The DataBlocks that will be read from disk
+			vector<DataBlock>                    targetblocks           ; // The DataBlocks that will be written to disk
 
-  DiskFileMap               diskFileMap;
+			u32                                  windowtable[256]       ; // Table for sliding CRCs
+			u32                                  windowmask             ; // Maks for sliding CRCs
 
-  map<MD5Hash,Par2RepairerSourceFile*> sourcefilemap;// Map from FileId to SourceFile
-  vector<Par2RepairerSourceFile*>      sourcefiles;  // The source files
-  vector<Par2RepairerSourceFile*>      verifylist;   // Those source files that are being repaired
+			bool                                 blockverifiable        ; // Whether and files can be verified at the block level
+			VerificationHashTable                verificationhashtable  ; // Hash table for block verification
+			list<Par2RepairerSourceFile*>        unverifiablesourcefiles; // Files that are not block verifiable
 
-  u64                       blocksize;               // The block size.
-  u64                       chunksize;               // How much of a block can be processed.
-  u32                       sourceblockcount;        // The total number of blocks
-  u32                       availableblockcount;     // How many undamaged blocks have been found
-  u32                       missingblockcount;       // How many blocks are missing
+			u32                                  completefilecount      ; // How many files are fully verified
+			u32                                  renamedfilecount       ; // How many files are verified but have the wrong name
+			u32                                  damagedfilecount       ; // How many files exist but are damaged
+			u32                                  missingfilecount       ; // How many files are completely missing
 
-  bool                      blocksallocated;         // Whether or not the DataBlocks have been allocated
-  vector<DataBlock>         sourceblocks;            // The DataBlocks that will be read from disk
-  vector<DataBlock>         targetblocks;            // The DataBlocks that will be written to disk
+			vector<DataBlock*>                   inputblocks            ; // Which DataBlocks will be read from disk
+			vector<DataBlock*>                   copyblocks             ; // Which DataBlocks will copied back to disk
+			vector<DataBlock*>                   outputblocks           ; // Which DataBlocks have to calculated using RS
 
-  u32                       windowtable[256];        // Table for sliding CRCs
-  u32                       windowmask;              // Maks for sliding CRCs
+			ReedSolomon<Galois16>                rs                     ; // The Reed Solomon matrix.
 
-  bool                            blockverifiable;         // Whether and files can be verified at the block level
-  VerificationHashTable           verificationhashtable;   // Hash table for block verification
-  list<Par2RepairerSourceFile*>   unverifiablesourcefiles; // Files that are not block verifiable
+			void                                *inputbuffer            ; // Buffer for reading DataBlocks (chunksize)
+			void                                *outputbuffer           ; // Buffer for writing DataBlocks (chunksize * missingblockcount)
 
-  u32                       completefilecount;       // How many files are fully verified
-  u32                       renamedfilecount;        // How many files are verified but have the wrong name
-  u32                       damagedfilecount;        // How many files exist but are damaged
-  u32                       missingfilecount;        // How many files are completely missing
-
-  vector<DataBlock*>        inputblocks;             // Which DataBlocks will be read from disk
-  vector<DataBlock*>        copyblocks;              // Which DataBlocks will copied back to disk
-  vector<DataBlock*>        outputblocks;            // Which DataBlocks have to calculated using RS
-
-  ReedSolomon<Galois16>     rs;                      // The Reed Solomon matrix.
-
-  void                     *inputbuffer;             // Buffer for reading DataBlocks (chunksize)
-  void                     *outputbuffer;            // Buffer for writing DataBlocks (chunksize * missingblockcount)
-
-  u64                       progress;                // How much data has been processed.
-  u64                       totaldata;               // Total amount of data to be processed.
-};
+			u64                                  progress               ; // How much data has been processed.
+			u64                                  totaldata              ; // Total amount of data to be processed.
+	};
 
 #endif // __PAR2REPAIRER_H__

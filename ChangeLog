@@ -1,213 +1,200 @@
-3 January 2005 Peter B Clements
 
+29 December 2013 / Jean-Louis FLOQUET
+	* version 0.53
+	* Retrieved Peter B Clements fixes (17&23 June 2004 + 3 January 2005)
+	* Code relooking
+	* Import partial modifications from Marcel Partap and/or Ike Devolder and/or theirs contributors :
+	    ¤ DiskFile::SplitRelativeFilename
+	    ¤ 'p' command line switch + associated functions
+	    ¤ 'R' command line switch + associated functions
+	    ¤ unix <=> windows path separator
+	    ¤ missing ending path separator
+	    ¤ par2cmdline.h / _MAX_PATH value updated (for non-Windows OS) but merged both declarations
+	    ¤ md5.h for minor changes
+	    ¤ verificationhashtable.h for duplicated nodes
+	    ¤ ReedSolomon<g>::Process
+	* The POSIX name for 'stricmp' is deprecated. Replaced with the ISO C++ conformant name: '_stricmp'
+	* Error message when parfile is not found
+	* Error message when filename is too long (better than 'file not found', right ?)
+	* Verbose Level first changes (will replace 'noiselevel')
+
+24 December 2013 / Jean-Louis FLOQUET
+	* version 0.52
+	* Add VisualStudio2010 files
+	* Update README
+	* Fix verify/repair handling files
+
+23 December 2013 / Jean-Louis FLOQUET
+	* version 0.51
+	* Add switch to auto adjust for number of recevory files
+	* Switches are now case sensitive
+	* Code relooking
+
+22 December 2013 / Jean-Louis FLOQUET
+	* version 0.5
+	* Get repository from / Peter B Clements, patched by Jonas Tingeborn
+	* DiskFile:FindFiles first changes for recursive search
+	* Fix for files > 2GB
+	* Fix missing include
+	* Code relooking
+
+3 January 2005 / Peter B Clements
 	* par2creatorsourcefile.cpp: "offset" must be updated when computing
 	  file and block hashes even if progress is not being displayed.
 
-23 June 2004 Peter B Clements
-
+23 June 2004 / Peter B Clements
 	* diskfile.cpp: Changed DiskFile::GetFileSize for WIN32
 	  so that it uses _stati64() to get the size of a file.
-
 	* par2creatorsourcefile.cpp: In UpdateHashes() the test
 	  that adjusts the length of the last block of a file when
 	  before updating the file hash was incorrect.
 
-17 June 2004 Peter B Clements
-
+17 June 2004 / Peter B Clements
 	* par1repairer.cpp, par2repairer.cpp: Report empty files when
 	  scanning for data.
 
-22 April 2004 Peter B Clements
-
+22 April 2004 / Peter B Clements
 	* README: Updated to include new commandline options.
-
 	* par2cmdline.vcproj: Update VS .NET project file with new
 	  version number.
-
 	* Released: Version 0.4.
 
-15 April 2004 Peter B Clements
-
+15 April 2004 / Peter B Clements
 	* par2cmdline.sln, par2cmdline.vcproj: Updated.
-
 	* commandline.cpp, commandline.h, par1repairer.cpp, par1repairer.h,
 	  par2cmdline.cpp, par2cmdline.h, par2creator.cpp, par2creator.h,
 	  par2creatorsourcefile.cpp, par2creatorsourcefile.h, par2repairer.cpp,
 	  par2repairer.h, reedsolomon.h, par2cmdline.h: Handle -v and -q
 	  options from the command line to change the amount of messages displayed.
 
-14 April 2004 Peter B Clements
-
+14 April 2004 / Peter B Clements
 	* commandline.h, commandline.cpp: Add -c<n> option to allow the
 	  number of recovery blocks to be directly specified rather than
 	  indirectly via the -r<n> option. Add -l option to allow the
 	  recovery file size to be limited so that the largest will have
 	  just enough recovery data to reconstruct the larget source file.
-
 	* par2creator.h, par2creator.cpp: Use the recovery block count
 	  specified via the command line instead of the redundancy % if
 	  given. Allocate the sizes of recovery files so the are limited
 	  if requested.
 
-12 April 2004 Peter B Clements
-
+12 April 2004 / Peter B Clements
 	* config.h.in, configure, configure.ac: Detect what defines are
 	  required to enable 64 bit file system support and whether or
 	  not fseeko() is available.
-
 	* diskfile.cpp: Use fseeko and 64 bit file operations if they
 	  are available.
-
 	* par2cmdline.h: Change order of include files.
-
 	* par2repairer.cpp: When verifying files with long filenames,
 	  display a shorter version of the filename.
-
 	* datablock.h: Change DataBlock::GetDiskFile so that in returns
 	  a non const DiskFile.
-
 	* par2repairer.cpp, par2creator.cpp: Only keep source files open
 	  when they are actually needed. This should allow par2 creation
 	  and repair to work with large file sets on OS's with a limit
 	  on the number of files that can be open simultaneously.
-
 	* Makefile.in, aclocal.m4, config.guess, config.sub, configure,
 	  depcomp, install-sh, missing, mkinstalldirs: Updated Automake to
 	  version 1.8.3 and Autoconf to version 2.59.
-
 	* configure.ac, config.h.in, configure: Check for getopt() and
 	  getopt_long().
 
-19 August 2003 Peter B Clements
-
+19 August 2003 / Peter B Clements
 	* Updated par2creator.cpp: When creating par2 files the wrong
 	  number of bytes would be reported as written to disk.
 
-13 August 2003 Peter B Clements
-
+13 August 2003 / Peter B Clements
 	* Updated par2cmdline.h: Recorrected spelling of STDC_HEADERS!
-
 	* Updated par1repairersourcefile.cpp, par2repairersourcefile.cpp:
 	  Don't treat ':' as a path separator on non Windows platforms.
 
-2 August 2003 Peter B Clements
-
+2 August 2003 / Peter B Clements
 	* Updated par1fileformat.h, par2fileformat.h: Use memcmp when
 	  comparing MAGIC strings and PACKETTYPE strings.
-
 	* Updated par2repairer.cpp: When a good packet is found after bad
 	  data, use memcpy to copy the packet header. Don't attempt to get
 	  the block count directly from the verification packet (which
 	  might be missing).
-
 	* Updated par2repairersourcefile.cpp: Add function to set the block
 	  count when the verification packet is missing.
 
-1 August 2003 Peter B Clements
-
+1 August 2003 / Peter B Clements
 	* Updated par2cmdline.h: Included <iomanip>.
 
-31 July 2003 Peter B Clements
-
+31 July 2003 / Peter B Clements
 	* Updated reedsolomon.h: Added debugging code.
 
-29 July 2003 Peter B Clements
-
+29 July 2003 / Peter B Clements
 	* Updated galois.h: Use typename when refering to a typedef
 	  in another class.
-
 	* Updated par1repairer.cpp: Cast size of fileentry in memcpy.
-
 	* Updated par2repairersourcefile.h: Add function to set the block
 	  count for a file when the verification packet is missing.
 
-25 July 2003 Peter B Clements
-
+25 July 2003 / Peter B Clements
 	* Updated par2cmdline.h: Correct spelling of STDC_HEADERS.
 
-16 July 2003 Peter B Clements
-
+16 July 2003 / Peter B Clements
 	* Release: Version 0.3.
 
-15 July 2003 Peter B Clements
-
+15 July 2003 / Peter B Clements
 	* Added config.guess, config.sub: Autoconf files.
-
 	* Updated configure, Makefile.in: Updated by Autoconf.
-
 	* Updated configure.ac: Changed par2cmdline version number. Added
 	  call to AC_CANONICAL_HOST.
-
 	* Updated par2cmdline.vcproj: Updated version number.
 
-3 July 2003 Peter B Clements
-
+3 July 2003 / Peter B Clements
 	* Updated aclocal.m4, depcomp, INSTALL, install-sh,
 	  mkinstalldirs: Upgrade Autoconf to version 1.75 from 1.6.3.
-
 	* Updated Makefile.am: Changed CXXFLAGS to AM_CXXFLAGS.
 
-24 June 2003 Peter B Clements
-
+24 June 2003 / Peter B Clements
 	* Updated commandline.cpp, commandline.h: Added "redundancyseet"
 	  member to record whether or not the value of "redundancy" has been
 	  specified so that 0% reduncancy is permissible.
-
 	* Updated par2creator.cpp: Detect situation where no recovery
 	  blocks are being created and skip related code sections.
 
-14 June 2003 Peter B Clements
-
+14 June 2003 / Peter B Clements
 	* Updated galois.h: Corrected bug in the initialisation of log[0] in
 	  GaloisTable.
 
-11 June 2003 Peter B Clements
-
+11 June 2003 / Peter B Clements
 	* Updated par1repair.cpp, par1repairer.h: Detect buggy version
 	  of smartpar which creates PAR1 files with invalid 16k hash
 	  values, Change alignement of temporary buffer used for
 	  PAR1FILEENTRYs to 8 bytes.
 
-7 June 2003 Peter B Clements
-
+7 June 2003 / Peter B Clements
 	* Update par2cmdline.h: Added <cassert> header include.
 
-3 June 2003 Peter B Clements
-
+3 June 2003 / Peter B Clements
 	* Updated verificationhashtable.h: Fixed bug where blocks of data
 	  that have the same crc and hash would not be correctly
 	  recognised.
 
-26 May 2003 Peter B Clements
-
+26 May 2003 / Peter B Clements
 	* Release: Version 0.2.
-
 	* Added config.h.in, configure, configure.ac, depcomp, missing,
 	  mkinstalldirs, stamp-h.in: Autoconf configuration files.
 	* Added NEWS
-
 	* Added par1fileformat.h, par1fileformat.cpp: Specifies the
 	  layout of PAR 1.0 files.
-
 	* Added par1repairer.h, par1repairer.cpp: Encapsulates the details
 	  of repairing using PAR 1.0 files.
-
 	* Added par1repairersourcefile.h, par1repairersourcefile.cpp:
 	  Stores details of a source file.
-
 	* Added test1, test2, test3, test4, test5, test6, testdata.tar.gz:
 	  Test files for "make check".
-
 	* Changed commandline.cpp, commandline.h: Add "version" member
 	  and set it according to whether the recovery file is a .PAR file
 	  or a .PAR2 file. Rename "par2filename" member to "parfilename".
-
 	* Changed creatorpacket.cpp: Made "string creator" a local variable
 	  in CreatorPacket::Create instead of a global. Commented out code
 	  that does nothing.
-
 	* Changed criticalpacket.h: Corrected bug in
-          CriticalPacketEntry::operator= which failed to return *this.
+	  CriticalPacketEntry::operator= which failed to return *this.
 
 	* Changed descriptionpacket.cpp: Commented out code which does
 	  nothing.
@@ -242,48 +229,30 @@
 	* Changed par2cmdline.cpp: Made "string version" a local variable
 	  instead of global. Use Par1Repairer or Par2Repaire as appropriate
 	  when verifying or repairing PAR1 and PAR2 files.
-
 	* Changed par2cmdline.h: Adjusted to conditionally include headers
 	  and to define various types based on the autoconf configuration.
-
 	* Changed par2cmdline.sln, par2cmdline.vcproj: Updated.
-
 	* Changed par2creator.cpp: Called Commandline::GetParFilename instead
 	  of CommandLine::GetPar2Filename.
-
 	* Changed par2creator.h: Redifine rs as ReedSolomon<Galois16>.
-
 	* Changed par2creatorsourcefile.cpp: Comment out code which does
 	  nothing. Added typecasts between 32bit and 64bit values.
-
 	* Changed par2fileformat.cpp: Adjusted initialisation code.
-
 	* Changed par2fileformat.h: Use packed attribute for gnu compilers.
-
 	* Changed par2repairer.cpp: Get filename using
 	  CommandLine::GetParFilename.
-
 	* Changed par2repairer.h: Redefine rs as ReedSolomon<Galois16>.
-
 	* Changed par2repairersourcefile: Add typecast from 32bit to 64bit.
-
 	* Changed README: Update details of how to compile the source code
 	  using the configure script.
-
 	* Changed recoverypacket.cpp: Commented out code which does nothing.
-
 	* Changed ReedSolomon.cpp: Move ReedSolomon constructor to
 	  ReedSolomon.h. Created template specialisations for Galois8 and
 	  Galois16 for SetInput, SetOutput, and Process.
-
 	* Changed ReedSolomon.h: Converted ReedSolomon to a template.
-
 	* Changed verificationhashtable.cpp: Removed unused code.
-
 	* Changed verificationpacket.cpp: Commented out code that does
 	  nothing.
 
-7 May 2003 Peter B Clements
-
+7 May 2003 / Peter B Clements
 	* Version 0.1: Initial release.
-

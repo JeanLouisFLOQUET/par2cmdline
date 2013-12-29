@@ -18,7 +18,6 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
-#include "config.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -28,44 +27,38 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-void banner(void) {
-	string version = PACKAGE_NAME " version " PACKAGE_VERSION;
-
-	cout << version << ", Copyright (C) 2003 Peter Brian Clements." << endl
-			 << endl
-			 << "par2cmdline comes with ABSOLUTELY NO WARRANTY." << endl
-			 << endl
-			 << "This is free software, and you are welcome to redistribute it and/or modify" << endl
-			 << "it under the terms of the GNU General Public License as published by the" << endl
-			 << "Free Software Foundation; either version 2 of the License, or (at your" << endl
-			 << "option) any later version. See COPYING for details." << endl
-			 << endl;
-}
-
 int main(int argc, char *argv[]) {
-#ifdef _MSC_VER
-	// Memory leak checking
-	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | /*_CRTDBG_CHECK_CRT_DF | */_CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
+	#ifdef _MSC_VER
+		// Memory leak checking
+		_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | /*_CRTDBG_CHECK_CRT_DF | */_CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	#endif
 
 //	printf("argc    = %d\n"  ,argc);
 //	for (int i=0;i<argc;i++) { printf("argv[%d] = '%s'\n",i,argv[i]); }
 
 	// Parse the command line
-	CommandLine *commandline = new CommandLine;
+	CommandLine *commandline       = new CommandLine;
+	bool         CommandLineResult = false;
 
-	Result result = eInvalidCommandLineArguments;
+	Result result     = eInvalidCommandLineArguments;
+	CommandLineResult = commandline->Parse(argc, argv);
 
-	if (!commandline->Parse(argc, argv)) {
-		banner();
-		CommandLine::usage();
+	if (commandline->GetDisplayHelp()) {
+		switch (commandline->GetOperation()) {
+			case CommandLine::opCreate : CommandLine::usage_HelpCreate(); break;
+			case CommandLine::opRepair : CommandLine::usage_HelpRepair(); break;
+			case CommandLine::opVerify : CommandLine::usage_HelpVerify(); break;
+			default                    :                                  break;
+		}
+	} else if (!CommandLineResult) {
+		CommandLine::banner();
+		CommandLine::usage ();
 	} else {
-		if (commandline->GetNoiseLevel() > CommandLine::nlSilent)
-			banner();
+		if ((commandline->GetVerboseLevel() & VERBOSE_LEVEL_HIDE_BANNER)==0)
+			CommandLine::banner();
 
 		// Which operation was selected
 		switch (commandline->GetOperation()) {
-
 			//=========================================================================
 			// Create recovery data
 			//=========================================================================
@@ -82,16 +75,16 @@ int main(int argc, char *argv[]) {
 			case CommandLine::opVerify: {
 				switch (commandline->GetVersion()) {
 					case CommandLine::verPar1: {
-						Par1Repairer *repairer = new Par1Repairer;
-						result = repairer->Process(*commandline, false);
-						delete repairer;
+							Par1Repairer *repairer = new Par1Repairer;
+							result = repairer->Process(*commandline, false);
+							delete repairer;
 						}
 						break;
 
 					case CommandLine::verPar2: {
-						Par2Repairer *repairer = new Par2Repairer;
-						result = repairer->Process(*commandline, false);
-						delete repairer;
+							Par2Repairer *repairer = new Par2Repairer;
+							result = repairer->Process(*commandline, false);
+							delete repairer;
 						}
 						break;
 
@@ -130,6 +123,7 @@ int main(int argc, char *argv[]) {
 			// Nothing to do
 			//=========================================================================
 			case CommandLine::opNone:
+				result = eSuccess;
 				break;
 		}
 	}

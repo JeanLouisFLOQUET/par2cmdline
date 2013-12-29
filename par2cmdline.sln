@@ -6,6 +6,7 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
+		Description = PAR2 Command Line (c) Jean-Louis FLOQUET
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D0A94F83-495E-4FB2-AC33-9A3EC2CC263B}.Debug|Win32.ActiveCfg = Debug|Win32
