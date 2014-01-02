@@ -20,10 +20,6 @@
 #ifndef __PARCMDLINE_H__
 	#define __PARCMDLINE_H__
 
-	#define VERBOSE_LEVEL_HIDE_BANNER            1
-	#define VERBOSE_LEVEL_LOAD_MAIN_PAR_SILENT   2
-	#define VERBOSE_LEVEL_LOAD_MAIN_PAR_COMPACT  4
-
 	#ifdef WIN32
 		// Windows includes
 		#define WIN32_LEAN_AND_MEAN

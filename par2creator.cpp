@@ -18,6 +18,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "common.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -29,6 +30,7 @@ static char THIS_FILE[]=__FILE__;
 
 Par2Creator::Par2Creator(void)
 : noiselevel(CommandLine::nlUnknown)
+, VerboseLevel      (0)
 , blocksize         (0)
 , chunksize         (0)
 , inputbuffer       (0)
@@ -66,6 +68,7 @@ Par2Creator::~Par2Creator(void) {
 Result Par2Creator::Process(const CommandLine &commandline) {
 	// Get information from commandline
 	noiselevel                                    = commandline.GetNoiseLevel             ();
+	VerboseLevel                                  = commandline.GetVerboseLevel           ();
 	blocksize                                     = commandline.GetBlockSize              ();
 	sourceblockcount                              = commandline.GetBlockCount             ();
 	const list<CommandLine::ExtraFile> extrafiles = commandline.GetExtraFiles             ();
@@ -99,16 +102,15 @@ Result Par2Creator::Process(const CommandLine &commandline) {
 	if (!ComputeRecoveryFileCount())
 		return eInvalidCommandLineArguments;
 
-	if (noiselevel > CommandLine::nlQuiet) {
-		// Display information.
-		cout << "Block size: " << blocksize << endl;
-		cout << "Source file count: " << sourcefilecount << endl;
-		cout << "Source block count: " << sourceblockcount << endl;
-		if (redundancy>0 || recoveryblockcount==0)
-			cout << "Redundancy: " << redundancy << '%' << endl;
-		cout << "Recovery block count: " << recoveryblockcount << endl;
-		cout << "Recovery file count: " << recoveryfilecount << endl;
-		cout << endl;
+	// Display information.
+	if (!(VerboseLevel&VERBOSE_CREATE_HIDE_STATS)) {
+		                                             cout << "Block size           : " << blocksize                 << endl;
+		                                             cout << "Source file count    : " << sourcefilecount           << endl;
+		                                             cout << "Source block count   : " << sourceblockcount          << endl;
+		if (redundancy>0 || recoveryblockcount==0) { cout << "Redundancy           : " << redundancy         << '%' << endl; }
+		                                             cout << "Recovery block count : " << recoveryblockcount        << endl;
+		                                             cout << "Recovery file count  : " << recoveryfilecount         << endl;
+		                                             cout                                                           << endl;
 	}
 
 	// Open all of the source files, compute the Hashes and CRC values, and store
@@ -158,7 +160,7 @@ Result Par2Creator::Process(const CommandLine &commandline) {
 			blockoffset += blocklength;
 		}
 
-		if (noiselevel > CommandLine::nlQuiet)
+		if (!(VerboseLevel&VERBOSE_CREATE_HIDE_PACKETS_RECOVERY))
 			cout << "Writing recovery packets" << endl;
 
 		// Finish computation of the recovery packets and write the headers to disk.
@@ -174,7 +176,7 @@ Result Par2Creator::Process(const CommandLine &commandline) {
 	if (!FinishCriticalPackets())
 		return eLogicError;
 
-	if (noiselevel > CommandLine::nlQuiet)
+	if (!(VerboseLevel&VERBOSE_CREATE_HIDE_PACKETS_VERIF))
 		cout << "Writing verification packets" << endl;
 
 	// Write all other critical packets to disk.
@@ -185,7 +187,7 @@ Result Par2Creator::Process(const CommandLine &commandline) {
 	if (!CloseFiles())
 		return eFileIOError;
 
-	if (noiselevel > CommandLine::nlSilent)
+	if (!(VerboseLevel&VERBOSE_CREATE_HIDE_PACKETS_DONE))
 		cout << "Done" << endl;
 
 	return eSuccess;
@@ -390,11 +392,13 @@ bool Par2Creator::ComputeRecoveryFileCount(void) {
 			}
 
 			if ((RecoveryFileCountAdjust) && (recoveryfilecount>recoveryblockcount)) {
-				cout << "Adjusting number of recovery files :"                               "\n"
-				        "    Total blocks in sources files : " << sourceblockcount   <<      "\n"
-				        "    Redundancy                    : " << redundancy         << " %" "\n"
-				        "    Recovery blocks to create     : " << recoveryblockcount <<      "\n"
-				        "    Recovery files                : " << recoveryfilecount  << " => " << recoveryblockcount << "\n";
+				if (!(VerboseLevel&VERBOSE_CREATE_HIDE_ADJUST_NB_FILES)) {
+					cout << "Adjusting number of recovery files :"                                "\n"
+					        "    Total blocks in sources files  : " << sourceblockcount   <<      "\n"
+					        "    Redundancy                     : " << redundancy         << " %" "\n"
+					        "    Recovery blocks to create      : " << recoveryblockcount <<      "\n"
+					        "    Recovery files                 : " << recoveryfilecount  << " => " << recoveryblockcount << "\n";
+				}
 				recoveryfilecount = recoveryblockcount;
 			}
 
@@ -443,17 +447,16 @@ bool Par2Creator::OpenSourceFiles(const list<CommandLine::ExtraFile> &extrafiles
 		string name;
 		DiskFile::SplitRelativeFilename(extrafile->FileName(), basepath, name);
 
-		if (noiselevel > CommandLine::nlSilent)
+		if (!(VerboseLevel&VERBOSE_CREATE_HIDE_OPENING_OK))
 			cout << "Opening: " << name << endl;
 
 		// Open the source file and compute its Hashes and CRCs.
-		if (!sourcefile->Open(noiselevel, *extrafile, blocksize, deferhashcomputation, basepath)) {
+		if (!sourcefile->Open(VerboseLevel, *extrafile, blocksize, deferhashcomputation, basepath)) {
 			delete sourcefile;
 			return false;
 		}
 
-		// Record the file verification and file description packets
-		// in the critical packet list.
+		// Record the file verification and file description packets in the critical packet list.
 		sourcefile->RecordCriticalPackets(criticalpackets);
 
 		// Add the source file to the sourcefiles array.
@@ -757,7 +760,9 @@ bool Par2Creator::ComputeRSMatrix(void) {
 		return false;
 
 	// Compute the RS matrix
-	if (!rs.Compute(noiselevel))
+	bool VerboseSilent = ((VerboseLevel&VERBOSE_CREATE_RS_MATRIX_SILENT)!=0) ? true : false;
+	bool VerboseDebug  = ((VerboseLevel&VERBOSE_CREATE_RS_MATRIX_DEBUG )!=0) ? true : false;
+	if (!rs.Compute(VerboseSilent,VerboseDebug))
 		return false;
 
 	return true;
@@ -840,7 +845,7 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength) {
 		lastopenfile->Close();
 	}
 
-	if (noiselevel > CommandLine::nlQuiet)
+	if (!(VerboseLevel&VERBOSE_CREATE_HIDE_PACKETS_RECOVERY))
 		cout << "Writing recovery packets\r";
 
 	// For each output block
@@ -853,7 +858,7 @@ bool Par2Creator::ProcessData(u64 blockoffset, size_t blocklength) {
 			return false;
 	}
 
-	if (noiselevel > CommandLine::nlQuiet)
+	if (!(VerboseLevel&VERBOSE_CREATE_HIDE_PACKETS_WRITE))
 		cout << "Wrote " << recoveryblockcount * blocklength << " bytes to disk" << endl;
 
 	return true;

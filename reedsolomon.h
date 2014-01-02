@@ -50,11 +50,11 @@
 			bool SetInput(u32 count);                   // All input blocks are present
 
 			// Set which output block are available or need to be computed
-			bool SetOutput(bool present, u16 exponent);
+			bool SetOutput(bool present, u16 exponent                     );
 			bool SetOutput(bool present, u16 lowexponent, u16 highexponent);
 
 			// Compute the RS Matrix
-			bool Compute(CommandLine::NoiseLevel noiselevel);
+			bool Compute(bool VerboseSilent, bool VerboseDebug);
 
 			// Process a block of data
 			bool Process( size_t      size         // The size of the block of data
@@ -69,7 +69,8 @@
 
 		protected:
 			// Perform Gaussian Elimination
-			bool GaussElim( CommandLine::NoiseLevel noiselevel
+			bool GaussElim( bool                    VerboseSilent
+				          , bool                    VerboseDebug
 			              , unsigned int            rows
 			              , unsigned int            leftcols
 			              , G                      *leftmatrix
@@ -192,14 +193,14 @@
 
 	// Construct the Vandermonde matrix and solve it if necessary
 	template<class g>
-	inline bool ReedSolomon<g>::Compute(CommandLine::NoiseLevel noiselevel) {
+	inline bool ReedSolomon<g>::Compute(bool VerboseSilent, bool VerboseDebug) {
 		u32 outcount = datamissing + parmissing ;
 		u32 incount  = datapresent + datamissing;
 
 		     if (datamissing > parpresent) { cerr << "Not enough recovery blocks." << endl; return false; }
 		else if (outcount == 0           ) { cerr << "No output blocks."           << endl; return false; }
 
-		if (noiselevel > CommandLine::nlQuiet)
+		if (!VerboseSilent)
 			cout << "Computing Reed Solomon matrix." << endl;
 
 		/*  Layout of RS Matrix:
@@ -234,7 +235,7 @@
 		for (unsigned int row=0; row<datamissing; row++) {
 			// Define MPDL to skip reporting and speed things up
 			#ifndef MPDL
-				if (noiselevel > CommandLine::nlQuiet) {
+				if (!VerboseSilent) {
 					int progress = row * 1000 / (datamissing+parmissing);
 					cout << "Constructing: " << progress/10 << '.' << progress%10 << "%\r" << flush;
 				}
@@ -273,7 +274,7 @@
 		for (unsigned int row=0; row<parmissing; row++) {
 			// Define MPDL to skip reporting and speed things up
 			#ifndef MPDL
-				if (noiselevel > CommandLine::nlQuiet) {
+				if (!VerboseSilent) {
 					int progress = (row+datamissing) * 1000 / (datamissing+parmissing);
 					cout << "Constructing: " << progress/10 << '.' << progress%10 << "%\r" << flush;
 				}
@@ -307,14 +308,14 @@
 
 			outputrow++;
 		}
-		if (noiselevel > CommandLine::nlQuiet)
+		if (!VerboseSilent)
 			cout << "Constructing: done." << endl;
 
 		// Solve the matrices only if recovering data
 		if (datamissing > 0) {
 			// Perform Gaussian Elimination and then delete the right matrix (which
 			// will no longer be required).
-			bool success = GaussElim(noiselevel, outcount, incount, leftmatrix, rightmatrix, datamissing);
+			bool success = GaussElim(VerboseSilent, VerboseDebug, outcount, incount, leftmatrix, rightmatrix, datamissing);
 			delete [] rightmatrix;
 			return success;
 		}
@@ -324,8 +325,8 @@
 
 	// Use Gaussian Elimination to solve the matrices
 	template<class g>
-	inline bool ReedSolomon<g>::GaussElim(CommandLine::NoiseLevel noiselevel, unsigned int rows, unsigned int leftcols, G *leftmatrix, G *rightmatrix, unsigned int datamissing) {
-		if (noiselevel == CommandLine::nlDebug) {
+	inline bool ReedSolomon<g>::GaussElim(bool VerboseSilent, bool VerboseDebug, unsigned int rows, unsigned int leftcols, G *leftmatrix, G *rightmatrix, unsigned int datamissing) {
+		if (VerboseDebug) {
 			for (unsigned int row=0; row<rows; row++) {
 				cout << ((row==0) ? "/"    : (row==rows-1) ? "\\"    : "|");
 				for (unsigned int col=0; col<leftcols; col++) {
@@ -389,7 +390,7 @@
 			for (unsigned int row2=0; row2<rows; row2++) {
 				// Define MPDL to skip reporting and speed things up
 				#ifndef MPDL
-					if (noiselevel > CommandLine::nlQuiet) {
+					if (!VerboseSilent) {
 						int newprogress = (row*rows+row2) * 1000 / (datamissing*rows);
 						if (progress != newprogress) {
 							progress = newprogress;
@@ -405,13 +406,13 @@
 					if (scalevalue == 1) {
 						// If the scaling factor happens to be 1, just subtract rows
 						for (unsigned int col=0; col<leftcols; col++) {
-							if (leftmatrix[row * leftcols + col] != 0) {
+							if (leftmatrix[row  * leftcols + col] != 0) {
 								leftmatrix[row2 * leftcols + col] -= leftmatrix[row * leftcols + col];
 							}
 						}
 
 						for (unsigned int col=row; col<rows; col++) {
-							if (rightmatrix[row * rows + col] != 0) {
+							if (rightmatrix[row  * rows + col] != 0) {
 								rightmatrix[row2 * rows + col] -= rightmatrix[row * rows + col];
 							}
 						}
@@ -419,7 +420,7 @@
 					else if (scalevalue != 0) {
 						// If the scaling factor is not 0, then compute accordingly.
 						for (unsigned int col=0; col<leftcols; col++) {
-							if (leftmatrix[row * leftcols + col] != 0) {
+							if (leftmatrix[row  * leftcols + col] != 0) {
 								leftmatrix[row2 * leftcols + col] -= leftmatrix[row * leftcols + col] * scalevalue;
 							}
 						}
@@ -433,9 +434,9 @@
 				}
 			}
 		}
-		if (noiselevel > CommandLine::nlQuiet)
+		if (!VerboseSilent)
 			cout << "Solving: done." << endl;
-		if (noiselevel == CommandLine::nlDebug) {
+		if (VerboseDebug) {
 			for (unsigned int row=0; row<rows; row++) {
 				cout << ((row==0) ? "/"    : (row==rows-1) ? "\\"    : "|");
 				for (unsigned int col=0; col<leftcols; col++) {

@@ -18,6 +18,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "common.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -48,7 +49,7 @@ Par2CreatorSourceFile::~Par2CreatorSourceFile(void) {
 // 16k of the file, and then compute the FileId and store the results
 // in a file description packet and a file verification packet.
 
-bool Par2CreatorSourceFile::Open(CommandLine::NoiseLevel noiselevel, const CommandLine::ExtraFile &extrafile, u64 blocksize, bool deferhashcomputation, string basepath) {
+bool Par2CreatorSourceFile::Open(u32 VerboseLevel, const CommandLine::ExtraFile &extrafile, u64 blocksize, bool deferhashcomputation, string basepath) {
 	// Get the filename and filesize
 	diskfilename = extrafile.FileName();
 	filesize = extrafile.FileSize();
@@ -71,8 +72,9 @@ bool Par2CreatorSourceFile::Open(CommandLine::NoiseLevel noiselevel, const Comma
 	diskfile  = new DiskFile;
 
 	// Open the source file
-	if (!diskfile->Open(diskfilename, filesize))
-		return false;
+	if (!diskfile->Open(diskfilename, filesize)) {
+		return false; 
+	}
 
 	// Do we want to defer the computation of the full file hash, and
 	// the block crc and hashes. This is only permitted if there
@@ -189,7 +191,7 @@ bool Par2CreatorSourceFile::Open(CommandLine::NoiseLevel noiselevel, const Comma
 				}
 			}
 
-			if (noiselevel > CommandLine::nlQuiet) {
+			if (!(VerboseLevel&VERBOSE_CREATE_HIDE_PROGRESS)) {
 				// Display progress
 				u32 oldfraction = (u32)(1000 *  offset       / filesize);
 				u32 newfraction = (u32)(1000 * (offset+want) / filesize);

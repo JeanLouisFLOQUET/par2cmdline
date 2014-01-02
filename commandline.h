@@ -83,9 +83,7 @@
 				ExtraFile(void);
 				ExtraFile(const ExtraFile&);
 				ExtraFile& operator=(const ExtraFile&);
-
 				ExtraFile(const string &name, u64 size);
-
 				string FileName(void) const {return filename;}
 				u64 FileSize(void) const {return filesize;}
 

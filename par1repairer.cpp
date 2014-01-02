@@ -18,6 +18,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "common.h"
 
 #ifdef _MSC_VER
 	#ifdef _DEBUG
@@ -30,20 +31,21 @@
 static u32 smartpar11 = 0x03000101;
 
 Par1Repairer::Par1Repairer(void) {
-	filelist = 0;
-	filelistsize = 0;
+	filelist          = 0;
+	filelistsize      = 0;
 
-	blocksize = 0;
+	blocksize         = 0;
 
 	completefilecount = 0;
-	renamedfilecount = 0;
-	damagedfilecount = 0;
-	missingfilecount = 0;
+	renamedfilecount  = 0;
+	damagedfilecount  = 0;
+	missingfilecount  = 0;
 
-	inputbuffer = 0;
-	outputbuffer = 0;
+	inputbuffer       = 0;
+	outputbuffer      = 0;
 
-	noiselevel = CommandLine::nlNormal;
+	noiselevel        = CommandLine::nlNormal;
+	VerboseLevel      = 0;
 }
 
 Par1Repairer::~Par1Repairer(void) {
@@ -1090,7 +1092,9 @@ bool Par1Repairer::ComputeRSmatrix(void) {
 		return true;
 	}
 
-	bool success = rs.Compute(noiselevel);
+	bool VerboseSilent = ((VerboseLevel&VERBOSE_CREATE_RS_MATRIX_SILENT)!=0) ? true : false;
+	bool VerboseDebug  = ((VerboseLevel&VERBOSE_CREATE_RS_MATRIX_DEBUG )!=0) ? true : false;
+	bool success = rs.Compute(VerboseSilent,VerboseDebug);
 	return success;
 }
 

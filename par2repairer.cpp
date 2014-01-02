@@ -18,6 +18,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "common.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -241,7 +242,7 @@ Result Par2Repairer::Process(const CommandLine &commandline, bool dorepair) {
 }
 
 void Par2Repairer::DisplayLoad(string name, u32 VerboseLevel, u32 newfraction, u32 packets, u32 recoverypackets) {
-	if (VerboseLevel & VERBOSE_LEVEL_LOAD_MAIN_PAR_SILENT) { return; }
+	if (VerboseLevel & VERBOSE_VERIFY_LOAD_MAIN_PAR_SILENT) { return; }
 
 	cout << "Loading \"" << name << "\"";
 
@@ -249,22 +250,22 @@ void Par2Repairer::DisplayLoad(string name, u32 VerboseLevel, u32 newfraction, u
 	//Progress (from 0 to 99.9%)
 	//-------------------------------------------------------------------
 	if (newfraction!=1000) {
-		if (VerboseLevel & VERBOSE_LEVEL_LOAD_MAIN_PAR_COMPACT) { cout << " : " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush; }
-		else                                                    { cout << "."   << endl; }
+		if (VerboseLevel & VERBOSE_VERIFY_LOAD_MAIN_PAR_COMPACT) { cout << " : " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush; }
+		else                                                     { cout << "."   << endl; }
 	}
 	//-------------------------------------------------------------------
 	// Progress = 100%
 	//-------------------------------------------------------------------
 	else {
 		// Packets
-		if (VerboseLevel & VERBOSE_LEVEL_LOAD_MAIN_PAR_COMPACT) {
+		if (VerboseLevel & VERBOSE_VERIFY_LOAD_MAIN_PAR_COMPACT) {
 			cout << " : " << packets << " packets" << flush;
 		} else {
 			cout << "Loaded " << packets << " new packets" << endl;
 		}
 
 		// Recovery Packets
-		if (VerboseLevel & VERBOSE_LEVEL_LOAD_MAIN_PAR_COMPACT) {
+		if (VerboseLevel & VERBOSE_VERIFY_LOAD_MAIN_PAR_COMPACT) {
 			if (recoverypackets>0) { cout << " with " << recoverypackets << " recovery blocks"; }
 		} else {
 			cout << " including " << recoverypackets << " recovery blocks";
@@ -1824,7 +1825,9 @@ bool Par2Repairer::ComputeRSmatrix(void) {
 	if (missingblockcount == 0)
 		return true;
 
-	bool success = rs.Compute(noiselevel);
+	bool VerboseSilent = ((VerboseLevel&VERBOSE_CREATE_RS_MATRIX_SILENT)!=0) ? true : false;
+	bool VerboseDebug  = ((VerboseLevel&VERBOSE_CREATE_RS_MATRIX_DEBUG )!=0) ? true : false;
+	bool success = rs.Compute(VerboseSilent,VerboseDebug);
 
 	return success;
 }

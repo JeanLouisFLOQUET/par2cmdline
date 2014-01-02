@@ -18,13 +18,14 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "common.h"
 
 #ifdef _MSC_VER
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
+	#ifdef _DEBUG
+		#undef THIS_FILE
+		static char THIS_FILE[]=__FILE__;
+		#define new DEBUG_NEW
+	#endif
 #endif
 
 int main(int argc, char *argv[]) {
@@ -54,7 +55,7 @@ int main(int argc, char *argv[]) {
 		CommandLine::banner();
 		CommandLine::usage ();
 	} else {
-		if ((commandline->GetVerboseLevel() & VERBOSE_LEVEL_HIDE_BANNER)==0)
+		if ((commandline->GetVerboseLevel() & VERBOSE_HIDE_BANNER)==0)
 			CommandLine::banner();
 
 		// Which operation was selected

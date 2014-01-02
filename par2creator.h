@@ -28,7 +28,7 @@
 
 	class Par2Creator {
 	public:
-	  Par2Creator(void);
+	   Par2Creator(void);
 	  ~Par2Creator(void);
 
 	  // Create recovery files from the source files specified on the command line
@@ -92,7 +92,8 @@
 	  bool CloseFiles(void);
 
 	protected:
-	  CommandLine::NoiseLevel noiselevel; // How noisy we should be
+	  CommandLine::NoiseLevel noiselevel  ; // How noisy we should be
+	  u32                     VerboseLevel;
 
 	  u64 blocksize;      // The size of each block.
 	  size_t chunksize;   // How much of each block will be processed at a time (due to memory constraints).

@@ -19,6 +19,7 @@
 
 #include "par2cmdline.h"
 #include "config.h"
+#include "common.h"
 
 #ifdef _MSC_VER
 	#ifdef _DEBUG
@@ -50,28 +51,28 @@ CommandLine::ExtraFile::ExtraFile(const string &name, u64 size)
 }
 
 CommandLine::CommandLine(void)
-: operation(opNone)
-, version(verUnknown)
-, noiselevel(nlUnknown)
-, blockcount(0)
-, blocksize(0)
-, firstblock(0)
-, recoveryfilescheme(scUnknown)
-, recoveryfilecount(0)
-, recoveryblockcount(0)
-, recoveryblockcountset(false)
-, redundancy(0)
-, redundancyset(false)
-, parfilename()
-, extrafiles()
-, totalsourcesize(0)
-, largestsourcesize(0)
-, RecoveryFileCountAdjust(false)
-, memorylimit(0)
-, purgefiles(false)
-, recursive(false)
-, DisplayHelp(false)
-, VerboseLevel(0)
+: operation               (opNone    )
+, version                 (verUnknown)
+, noiselevel              (nlUnknown )
+, blockcount              (0         )
+, blocksize               (0         )
+, firstblock              (0         )
+, recoveryfilescheme      (scUnknown )
+, recoveryfilecount       (0         )
+, recoveryblockcount      (0         )
+, recoveryblockcountset   (false     )
+, redundancy              (0         )
+, redundancyset           (false     )
+, parfilename             (          )
+, extrafiles              (          )
+, totalsourcesize         (0         )
+, largestsourcesize       (0         )
+, RecoveryFileCountAdjust (false     )
+, memorylimit             (0         )
+, purgefiles              (false     )
+, recursive               (false     )
+, DisplayHelp             (false     )
+, VerboseLevel            (0         )
 { }
 
 void CommandLine::banner(void) {
@@ -136,7 +137,14 @@ void CommandLine::usage_HelpMain(void) {
 }
 
 void CommandLine::usage_HelpCreate(void) {
-	cout << "create\n";
+	cout <<
+		"You can specifiy -v<xx> verbose value by adding needed sub-values :"      "\n"
+		"   Do not display banner               :  1"                              "\n"
+		"   Do not dispaly 0 byte files         :  2"                              "\n"
+		"   Do not display statistics           :  4"                              "\n"
+		"   Do not display 'opening file'       :  8"                              "\n"
+		"   DEBUG                               : xx"                              "\n"
+		;
 }
 
 void CommandLine::usage_HelpRepair(void) {
@@ -149,7 +157,7 @@ void CommandLine::usage_HelpVerify(void) {
 		"   Do not display banner               :  1"                              "\n"
 		"   Display loading main PAR2 (silent ) :  2"                              "\n"
 		"   Display loading main PAR2 (compact) :  4"                              "\n"
-  		"   DEBUG                               : xx"                              "\n"
+		"   DEBUG                               : xx"                              "\n"
 		;
 }
 
@@ -450,12 +458,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 				//==============================================================================================================================
 				// Display help
 				//==============================================================================================================================
-				case 'h': {
-						DisplayHelp = true;
-						return false;
-					}
-					break;
-
+				case 'h': { DisplayHelp = true; return false; } break;
 				//==============================================================================================================================
 				// Recursive search
 				//==============================================================================================================================
@@ -555,7 +558,7 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 						if (filename.length()>_MAX_PATH) {
 							cerr << "The source filename is too long (" << filename.length() << ") : \"" << filename << "\"" << endl;
 							return false;
-						} else 
+						} else
 						// All other files must exist
 						if (!DiskFile::FileExists(filename)) {
 							cerr << "The source file does not exist: " << filename << endl;
@@ -572,7 +575,8 @@ bool CommandLine::Parse(int argc, char *argv[]) {
 							totalsourcesize += filesize;
 							if (largestsourcesize < filesize) { largestsourcesize = filesize; }
 						} else {
-							cout << "Skipping 0 byte file: " << filename << endl;
+							if (!(VerboseLevel&VERBOSE_CREATE_HIDE_0BYTE))
+								cout << "Skipping 0 byte file: " << filename << endl;
 						}
 					}
 
